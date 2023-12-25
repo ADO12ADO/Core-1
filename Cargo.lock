@@ -421,6 +421,7 @@ dependencies = [
  "astroport-pair-bonded",
  "astroport-staking",
  "astroport-token",
+ "astroport-xastro-token",
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-multi-test 0.15.1",
