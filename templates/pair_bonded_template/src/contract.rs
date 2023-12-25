@@ -39,7 +39,7 @@ impl<'a> PairBonded<'a> for Contract<'a> {
         todo!("Implement swap assets using 3rd party contract.")
     }
 
-    /// Simulation swap using Astroport Staking contract.
+    /// Simulation swap using Ito Staking contract.
     fn query_simulation(
         &self,
         _deps: Deps,

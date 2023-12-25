@@ -95,7 +95,7 @@ where
                     deposit_token_addr: astro_token.address.to_string(),
                 },
                 &[],
-                "Astroport Staking",
+                "Ito Staking",
                 Some(ASTROPORT.to_string()),
             )
             .unwrap();

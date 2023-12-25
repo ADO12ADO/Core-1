@@ -29,7 +29,7 @@ impl<'a> Contract<'a> {
     }
 }
 
-/// Implementation of the bonded pair template. Performs ASTRO-xASTRO swap operations.
+/// Implementation of the bonded pair template. Performs ASTRO-ITO swap operations.
 impl<'a> PairBonded<'a> for Contract<'a> {
     const CONTRACT_NAME: &'a str = "astroport-pair-astro-xastro";
 
@@ -120,7 +120,7 @@ impl<'a> PairBonded<'a> for Contract<'a> {
         Ok(Response::new().add_messages(messages))
     }
 
-    /// Simulation swap using Astroport Staking contract.
+    /// Simulation swap using Ito Staking contract.
     fn query_simulation(
         &self,
         deps: Deps,
@@ -167,7 +167,7 @@ impl<'a> PairBonded<'a> for Contract<'a> {
         })
     }
 
-    /// Reverse simulation swap using Astroport Staking contract.
+    /// Reverse simulation swap using Ito Staking contract.
     fn query_reverse_simulation(
         &self,
         deps: Deps,

@@ -2,25 +2,25 @@ use astroport_pair_bonded::error::ContractError;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Api};
 
-/// This structure stores a ASTRO-xASTRO pool's params.
+/// This structure stores a ASTRO-ITO pool's params.
 #[cw_serde]
 pub struct Params {
     /// ASTRO token contract address.
     pub astro_addr: Addr,
-    /// xASTRO token contract address.
+    /// ITO token contract address.
     pub xastro_addr: Addr,
-    /// Astroport Staking contract address.
+    /// Ito Staking contract address.
     pub staking_addr: Addr,
 }
 
-/// This structure stores a ASTRO-xASTRO pool's init params.
+/// This structure stores a ASTRO-ITO pool's init params.
 #[cw_serde]
 pub struct InitParams {
     /// ASTRO token contract address.
     pub astro_addr: String,
-    /// xASTRO token contract address.
+    /// ITO token contract address.
     pub xastro_addr: String,
-    /// Astroport Staking contract address.
+    /// Ito Staking contract address.
     pub staking_addr: String,
 }
 

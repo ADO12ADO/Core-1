@@ -17,13 +17,13 @@ use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
 /// Contract name that is used for migration.
-const CONTRACT_NAME: &str = "astroport-staking";
+const CONTRACT_NAME: &str = "ito-staking";
 /// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// xASTRO information.
-const TOKEN_NAME: &str = "Staked Astroport";
-const TOKEN_SYMBOL: &str = "xASTRO";
+/// ITO information.
+const TOKEN_NAME: &str = "Staked Ito";
+const TOKEN_SYMBOL: &str = "ITO";
 
 /// A `reply` call code ID used for sub-messages.
 const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
@@ -50,7 +50,7 @@ pub fn instantiate(
         },
     )?;
 
-    // Create the xASTRO token
+    // Create the ITO token
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
             admin: Some(msg.owner),
@@ -67,7 +67,7 @@ pub fn instantiate(
                 marketing: msg.marketing,
             })?,
             funds: vec![],
-            label: String::from("Staked Astroport Token"),
+            label: String::from("Staked Ito Token"),
         }
         .into(),
         id: INSTANTIATE_TOKEN_REPLY_ID,
@@ -244,7 +244,7 @@ fn receive_cw20(
 /// ## Queries
 /// * **QueryMsg::Config {}** Returns the staking contract configuration using a [`ConfigResponse`] object.
 ///
-/// * **QueryMsg::TotalShares {}** Returns the total xASTRO supply using a [`Uint128`] object.
+/// * **QueryMsg::TotalShares {}** Returns the total ITO supply using a [`Uint128`] object.
 ///
 /// * **QueryMsg::Config {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -279,7 +279,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
-        "astroport-staking" => match contract_version.version.as_ref() {
+        "ito-staking" => match contract_version.version.as_ref() {
             "1.0.0" | "1.0.1" | "1.0.2" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
