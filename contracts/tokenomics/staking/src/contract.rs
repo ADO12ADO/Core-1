@@ -49,33 +49,31 @@ pub fn instantiate(
             xastro_token_addr: Addr::unchecked(""),
         },
     )?;
-
-    // Create the ITO token
-    let sub_msg: Vec<SubMsg> = vec![SubMsg {
-        msg: WasmMsg::Instantiate {
-            admin: Some(msg.owner),
-            code_id: msg.token_code_id,
-            msg: to_binary(&TokenInstantiateMsg {
-                name: TOKEN_NAME.to_string(),
-                symbol: TOKEN_SYMBOL.to_string(),
-                decimals: 6,
-                initial_balances: vec![],
-                mint: Some(MinterResponse {
-                    minter: env.contract.address.to_string(),
-                    cap: Some(21_000_000),
-                }),
-                marketing: msg.marketing,
-            })?,
-            funds: vec![],
-            label: String::from("Staked Ito Token"),
-        }
-        .into(),
-        id: INSTANTIATE_TOKEN_REPLY_ID,
-        gas_limit: None,
-        reply_on: ReplyOn::Success,
-    }];
-
-    Ok(Response::new().add_submessages(sub_msg))
+// Create the ITO token
+let sub_msg: Vec<SubMsg> = vec![SubMsg {
+    msg: WasmMsg::Instantiate {
+        admin: Some(msg.owner),
+        code_id: msg.token_code_id,
+        msg: to_binary(&TokenInstantiateMsg {
+            name: TOKEN_NAME.to_string(),
+            symbol: TOKEN_SYMBOL.to_string(),
+            decimals: 6,
+            initial_balances: vec![],
+            mint: Some(MinterResponse {
+                minter: env.contract.address.to_string(),
+                cap: Some(21_000_000), // Set the cap for minting
+            }),
+            marketing: msg.marketing,
+        })?,
+        funds: vec![],
+        label: String::from("Staked Ito Token"),
+    }
+    .into(),
+    id: INSTANTIATE_TOKEN_REPLY_ID,
+    gas_limit: None,
+    reply_on: ReplyOn::Success,
+}];
+  Ok(Response::new().add_submessages(sub_msg))
 }
 
 /// Exposes execute functions available in the contract.
@@ -293,4 +291,4 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         .add_attribute("previous_contract_version", &contract_version.version)
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
-}
+                }
