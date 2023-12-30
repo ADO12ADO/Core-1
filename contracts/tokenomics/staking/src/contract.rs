@@ -153,18 +153,34 @@ fn receive_cw20(
                 return Err(ContractError::Unauthorized {});
             }
 
-            // In a CW20 `send`, the total balance of the recipient is already increased.
-            // To properly calculate the total amount of ASTRO deposited in staking, we should subtract the user deposit from the pool
-            total_deposit -= amount;
-            let mint_amount: Uint128 = if total_shares.is_zero() || total_deposit.is_zero() {
-                amount = amount
-                    .checked_sub(MINIMUM_STAKE_AMOUNT)
-                    .map_err(|_| ContractError::MinimumStakeAmountError {})?;
+            // Convert the amount to Uint128 with the correct decimal places (6 in this case)
+            let amount_with_decimals = Uint128::from(amount.u128() * 1_000_000);
 
-                // amount cannot become zero after minimum stake subtraction
-                if amount.is_zero() {
-                    return Err(ContractError::MinimumStakeAmountError {});
-                }
+            // Check if the total deposit after the current stake exceeds the limit (21 million tokens)
+            let total_deposit_after_stake = total_deposit
+                .checked_add(amount_with_decimals)
+                .ok_or(ContractError::ArithmeticError {})?;
+
+            let total_deposit_limit = Uint128::new(21_000_000 * 1_000_000); // 21 million with 6 decimal places
+
+            if total_deposit_after_stake > total_deposit_limit {
+                return Err(ContractError::ExceedsTotalDepositLimit {});
+            }
+
+            // Continue with the rest of the logic for entering the stake
+            // ...
+
+            Ok(Response::new().add_messages(messages).add_attributes(vec![
+                attr("action", "enter"),
+                attr("recipient", recipient),
+                attr("astro_amount", cw20_msg.amount),
+                attr("xastro_amount", mint_amount),
+            ]))
+        }
+        // Handle other cases if needed
+        _ => Err(ContractError::InvalidCw20Hook {}),
+    }
+}
 
                 messages.push(wasm_execute(
                     config.xastro_token_addr.clone(),
@@ -293,4 +309,4 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         .add_attribute("previous_contract_version", &contract_version.version)
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
-            }
+}
