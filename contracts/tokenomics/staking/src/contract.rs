@@ -178,7 +178,7 @@ fn receive_cw20(
             ]))
         }
         // Handle other cases if needed
-        _ => Err(ContractError::InvalidCw20Hook {}),
+        _ => {Err(ContractError::InvalidCw20Hook {}),
     }
 }messages.push(wasm_execute(
  config.xastro_token_addr.clone(),
