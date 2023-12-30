@@ -16,22 +16,22 @@ use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
-// Contract name that is used for migration.
+/// Contract name that is used for migration.
 const CONTRACT_NAME: &str = "ito-staking";
-// Contract version that is used for migration.
+/// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-// ITO information.
+/// ITO information.
 const TOKEN_NAME: &str = "Staked Ito";
 const TOKEN_SYMBOL: &str = "ITO";
 
-// A `reply` call code ID used for sub-messages.
+/// A `reply` call code ID used for sub-messages.
 const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
 
-// Minimum initial xastro share
+/// Minimum initial xastro share
 pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
 
-// Creates a new contract with the specified parameters in the [`InstantiateMsg`].
+/// Creates a new contract with the specified parameters in the [`InstantiateMsg`].
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -77,11 +77,12 @@ pub fn instantiate(
 
     Ok(Response::new().add_submessages(sub_msg))
 }
-// Exposes execute functions available in the contract.
-//
-// ## Variants
-// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
-// it depending on the received template.
+
+/// Exposes execute functions available in the contract.
+///
+/// ## Variants
+/// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
+/// it depending on the received template.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -94,7 +95,7 @@ pub fn execute(
     }
 }
 
-// The entry point to the contract for processing replies from submessages.
+/// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match msg {
@@ -123,9 +124,10 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         _ => Err(ContractError::FailedToParseReply {}),
     }
 }
-// Receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
-//
-// * **cw20_msg** CW20 message to process.
+
+/// Receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
+///
+/// * **cw20_msg** CW20 message to process.
 fn receive_cw20(
     deps: DepsMut,
     env: Env,
@@ -154,19 +156,46 @@ fn receive_cw20(
             // In a CW20 `send`, the total balance of the recipient is already increased.
             // To properly calculate the total amount of ASTRO deposited in staking, we should subtract the user deposit from the pool
             total_deposit -= amount;
+            let mint_amount: Uint128 = if total_shares.is_zero() || total_deposit.is_zero() {
+                amount = amount
+                    .checked_sub(MINIMUM_STAKE_AMOUNT)
+                    .map_err(|_| ContractError::MinimumStakeAmountError {})?;
 
-            // Ensure the total staked amount does not exceed 21 million
-            let total_staked = query_token_balance(
-                &deps.querier,
-                &config.astro_token_addr,
-                env.contract.address.clone(),
-            )?;
-            let new_total_staked = total_staked.checked_add(amount)?;
-            if new_total_staked > Uint128::new(21_000_000) {
-                return Err(ContractError::ExceedsMaximumTotalStake {});
-            }
+                // amount cannot become zero after minimum stake subtraction
+                if amount.is_zero() {
+                    return Err(ContractError::MinimumStakeAmountError {});
+                }
 
-            // ... (continue with your existing logic)
+                messages.push(wasm_execute(
+                    config.xastro_token_addr.clone(),
+                    &Cw20ExecuteMsg::Mint {
+                        recipient: env.contract.address.to_string(),
+                        amount: MINIMUM_STAKE_AMOUNT,
+                    },
+                    vec![],
+                )?);
+
+                amount
+            } else {
+                amount = amount
+                    .checked_mul(total_shares)?
+                    .checked_div(total_deposit)?;
+
+                if amount.is_zero() {
+                    return Err(ContractError::StakeAmountTooSmall {});
+                }
+
+                amount
+            };
+
+            messages.push(wasm_execute(
+                config.xastro_token_addr,
+                &Cw20ExecuteMsg::Mint {
+                    recipient: recipient.clone(),
+                    amount: mint_amount,
+                },
+                vec![],
+            )?);
 
             Ok(Response::new().add_messages(messages).add_attributes(vec![
                 attr("action", "enter"),
@@ -209,6 +238,7 @@ fn receive_cw20(
         }
     }
 }
+
 /// Exposes all the queries available in the contract.
 ///
 /// ## Queries
@@ -263,4 +293,4 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         .add_attribute("previous_contract_version", &contract_version.version)
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
-}
+                        }
