@@ -147,7 +147,7 @@ fn receive_cw20(
     let total_shares = query_supply(&deps.querier, &config.xastro_token_addr)?;
 
     match from_binary(&cw20_msg.msg)? {
-        Cw20HookMsg::Enter {} => {
+        Cw20HookMsg::Enter => {
             let mut messages = vec![];
             if info.sender != config.astro_token_addr {
                 return Err(ContractError::Unauthorized {});
@@ -181,7 +181,6 @@ fn receive_cw20(
         _ => Err(ContractError::InvalidCw20Hook {}),
     }
 }
-
                 messages.push(wasm_execute(
                     config.xastro_token_addr.clone(),
                     &Cw20ExecuteMsg::Mint {
