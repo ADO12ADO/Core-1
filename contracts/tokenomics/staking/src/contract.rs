@@ -123,7 +123,6 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         _ => Err(ContractError::FailedToParseReply {}),
     }
 }
-
 // Receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
 //
 // * **cw20_msg** CW20 message to process.
