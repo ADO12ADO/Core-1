@@ -174,15 +174,14 @@ fn receive_cw20(
                 attr("action", "enter"),
                 attr("recipient", recipient),
                 attr("astro_amount", cw20_msg.amount),
-                attr("xastro_amount", mint_amount),
+                attr("xastro_amount", amount_with_decimals),
             ]))
         }
         // Handle other cases if needed
         _ => Err(ContractError::InvalidCw20Hook {}),
     }
 }
-                messages.push(wasm_execute(
-                    config.xastro_token_addr.clone(),
+ config.xastro_token_addr.clone(),
                     &Cw20ExecuteMsg::Mint {
                         recipient: env.contract.address.to_string(),
                         amount: MINIMUM_STAKE_AMOUNT,
