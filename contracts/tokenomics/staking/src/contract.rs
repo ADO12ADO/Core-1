@@ -77,7 +77,6 @@ pub fn instantiate(
 
     Ok(Response::new().add_submessages(sub_msg))
 }
-
 // Exposes execute functions available in the contract.
 //
 // ## Variants
@@ -128,89 +127,89 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
 // Receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
 //
 // * **cw20_msg** CW20 message to process.
-    fn receive_cw20(
-        deps: DepsMut,
-        env: Env,
-        info: MessageInfo,
-        cw20_msg: Cw20ReceiveMsg,
-    ) -> Result<Response, ContractError> {
-        let config: Config = CONFIG.load(deps.storage)?;
+fn receive_cw20(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    cw20_msg: Cw20ReceiveMsg,
+) -> Result<Response, ContractError> {
+    let config: Config = CONFIG.load(deps.storage)?;
 
-        let recipient = cw20_msg.sender;
-        let mut amount = cw20_msg.amount;
+    let recipient = cw20_msg.sender;
+    let mut amount = cw20_msg.amount;
 
-        let mut total_deposit = query_token_balance(
-            &deps.querier,
-            &config.astro_token_addr,
-            env.contract.address.clone(),
-        )?;
-        let total_shares = query_supply(&deps.querier, &config.xastro_token_addr)?;
+    let mut total_deposit = query_token_balance(
+        &deps.querier,
+        &config.astro_token_addr,
+        env.contract.address.clone(),
+    )?;
+    let total_shares = query_supply(&deps.querier, &config.xastro_token_addr)?;
 
-        match from_binary(&cw20_msg.msg)? {
-            Cw20HookMsg::Enter {} => {
-                let mut messages = vec![];
-                if info.sender != config.astro_token_addr {
-                    return Err(ContractError::Unauthorized {});
-                }
-
-                // In a CW20 `send`, the total balance of the recipient is already increased.
-                // To properly calculate the total amount of ASTRO deposited in staking, we should subtract the user deposit from the pool
-                total_deposit -= amount;
-
-                // Ensure the total staked amount does not exceed 21 million
-                let total_staked = query_token_balance(
-                    &deps.querier,
-                    &config.astro_token_addr,
-                    env.contract.address.clone(),
-                )?;
-                let new_total_staked = total_staked.checked_add(amount)?;
-                if new_total_staked > Uint128::new(21_000_000) {
-                    return Err(ContractError::ExceedsMaximumTotalStake {});
-                }
-
-                // ... (continue with your existing logic)
-
-                Ok(Response::new().add_messages(messages).add_attributes(vec![
-                    attr("action", "enter"),
-                    attr("recipient", recipient),
-                    attr("astro_amount", cw20_msg.amount),
-                    attr("xastro_amount", mint_amount),
-                ]))
+    match from_binary(&cw20_msg.msg)? {
+        Cw20HookMsg::Enter {} => {
+            let mut messages = vec![];
+            if info.sender != config.astro_token_addr {
+                return Err(ContractError::Unauthorized {});
             }
-            Cw20HookMsg::Leave {} => {
-                if info.sender != config.xastro_token_addr {
-                    return Err(ContractError::Unauthorized {});
-                }
 
-                let what = amount
-                    .checked_mul(total_deposit)?
-                    .checked_div(total_shares)?;
+            // In a CW20 `send`, the total balance of the recipient is already increased.
+            // To properly calculate the total amount of ASTRO deposited in staking, we should subtract the user deposit from the pool
+            total_deposit -= amount;
 
-                // Burn share
-                let res = Response::new()
-                    .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-                        contract_addr: config.xastro_token_addr.to_string(),
-                        msg: to_binary(&Cw20ExecuteMsg::Burn { amount })?,
-                        funds: vec![],
-                    }))
-                    .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-                        contract_addr: config.astro_token_addr.to_string(),
-                        msg: to_binary(&Cw20ExecuteMsg::Transfer {
-                            recipient: recipient.clone(),
-                            amount: what,
-                        })?,
-                        funds: vec![],
-                    }));
-
-                Ok(res.add_attributes(vec![
-                    attr("action", "leave"),
-                    attr("recipient", recipient),
-                    attr("xastro_amount", cw20_msg.amount),
-                    attr("astro_amount", what),
-                ]))
+            // Ensure the total staked amount does not exceed 21 million
+            let total_staked = query_token_balance(
+                &deps.querier,
+                &config.astro_token_addr,
+                env.contract.address.clone(),
+            )?;
+            let new_total_staked = total_staked.checked_add(amount)?;
+            if new_total_staked > Uint128::new(21_000_000) {
+                return Err(ContractError::ExceedsMaximumTotalStake {});
             }
+
+            // ... (continue with your existing logic)
+
+            Ok(Response::new().add_messages(messages).add_attributes(vec![
+                attr("action", "enter"),
+                attr("recipient", recipient),
+                attr("astro_amount", cw20_msg.amount),
+                attr("xastro_amount", mint_amount),
+            ]))
+        }
+        Cw20HookMsg::Leave {} => {
+            if info.sender != config.xastro_token_addr {
+                return Err(ContractError::Unauthorized {});
+            }
+
+            let what = amount
+                .checked_mul(total_deposit)?
+                .checked_div(total_shares)?;
+
+            // Burn share
+            let res = Response::new()
+                .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: config.xastro_token_addr.to_string(),
+                    msg: to_binary(&Cw20ExecuteMsg::Burn { amount })?,
+                    funds: vec![],
+                }))
+                .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: config.astro_token_addr.to_string(),
+                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                        recipient: recipient.clone(),
+                        amount: what,
+                    })?,
+                    funds: vec![],
+                }));
+
+            Ok(res.add_attributes(vec![
+                attr("action", "leave"),
+                attr("recipient", recipient),
+                attr("xastro_amount", cw20_msg.amount),
+                attr("astro_amount", what),
+            ]))
         }
     }
+}
 /// Exposes all the queries available in the contract.
 ///
 /// ## Queries
@@ -237,6 +236,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         )?),
     }
 }
+
 /// ## Description
 /// Used for migration of contract. Returns the default object of type [`Response`].
 /// ## Params
