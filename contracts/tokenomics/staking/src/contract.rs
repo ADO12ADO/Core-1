@@ -62,7 +62,7 @@ pub fn instantiate(
                 initial_balances: vec![],
                 mint: Some(MinterResponse {
                     minter: env.contract.address.to_string(),
-                    cap: 21000000,
+                    cap: Some(21_000_000),
                 }),
                 marketing: msg.marketing,
             })?,
