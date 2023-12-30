@@ -3,6 +3,7 @@ use cosmwasm_std::{
     DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
     SubMsgResponse, SubMsgResult, Uint128, WasmMsg,
 };
+
 use cw_utils::parse_instantiate_response_data;
 
 use crate::error::ContractError;
@@ -12,9 +13,6 @@ use astroport::staking::{
 };
 use cw2::{get_contract_version, set_contract_version};
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
-
-use astroport::querier::{query_supply, query_token_balance};
-use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
 /// Contract name that is used for migration.
 const CONTRACT_NAME: &str = "ito-staking";
@@ -204,7 +202,7 @@ fn receive_cw20(
                 attr("xastro_amount", mint_amount),
             ]))
         }
-        Cw20HookMsg::Leave {} => {
+          Cw20HookMsg::Leave {} => {
             if info.sender != config.xastro_token_addr {
                 return Err(ContractError::Unauthorized {});
             }
@@ -293,4 +291,4 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         .add_attribute("previous_contract_version", &contract_version.version)
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
-                        }
+}
