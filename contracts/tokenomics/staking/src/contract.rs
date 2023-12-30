@@ -230,14 +230,11 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::TotalShares {} => {
             to_binary(&query_supply(&deps.querier, &config.xastro_token_addr)?)
         }
-        QueryMsg::TotalDeposit {} => {
-            let balance = query_token_balance(
-                &deps.querier,
-                &config.astro_token_addr,
-                env.contract.address,
-            )?;
-            Ok(to_binary(&balance)?)
-        }
+        QueryMsg::TotalDeposit {} => to_binary(&query_token_balance(
+            &deps.querier,
+            &config.astro_token_addr,
+            env.contract.address,
+        )?),
     }
 }
 /// ## Description
