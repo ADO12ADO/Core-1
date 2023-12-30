@@ -1,7 +1,6 @@
 use cosmwasm_std::{
     attr, entry_point, from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps,
-    DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
-    SubMsgResponse, SubMsgResult, Uint128, WasmMsg,
+    DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdResult, SubMsg, SubMsgResult, SubMsgResponse, Uint128, WasmMsg,
 };
 use cw_utils::parse_instantiate_response_data;
 
@@ -16,119 +15,13 @@ use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
-/// Contract name that is used for migration.
-const CONTRACT_NAME: &str = "ito-staking";
-/// Contract version that is used for migration.
-const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
-
-/// ITO information.
-const TOKEN_NAME: &str = "Staked Ito";
-const TOKEN_SYMBOL: &str = "ITO";
-
-/// A `reply` call code ID used for sub-messages.
-const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
-
-/// Minimum initial xastro share
-pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
-
-/// Creates a new contract with the specified parameters in the [`InstantiateMsg`].
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn instantiate(
-    deps: DepsMut,
-    env: Env,
-    _info: MessageInfo,
-    msg: InstantiateMsg,
-) -> StdResult<Response> {
-    set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
-    // Store config
-    CONFIG.save(
-        deps.storage,
-        &Config {
-            astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
-            xastro_token_addr: Addr::unchecked(""),
-        },
-    )?;
-
-    // Create the ITO token
-    let sub_msg: Vec<SubMsg> = vec![SubMsg {
-        msg: WasmMsg::Instantiate {
-            admin: Some(msg.owner),
-            code_id: msg.token_code_id,
-            msg: to_binary(&TokenInstantiateMsg {
-                name: TOKEN_NAME.to_string(),
-                symbol: TOKEN_SYMBOL.to_string(),
-                decimals: 6,
-                initial_balances: vec![],
-                mint: Some(MinterResponse {
-                    minter: env.contract.address.to_string(),
-                    cap: None,
-                }),
-                marketing: msg.marketing,
-            })?,
-            funds: vec![],
-            label: String::from("Staked Ito Token"),
-        }
-        .into(),
-        id: INSTANTIATE_TOKEN_REPLY_ID,
-        gas_limit: None,
-        reply_on: ReplyOn::Success,
-    }];
-
-    Ok(Response::new().add_submessages(sub_msg))
-}
-
-/// Exposes execute functions available in the contract.
-///
-/// ## Variants
-/// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
-/// it depending on the received template.
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
-    match msg {
-        ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
-    }
-}
-
-/// The entry point to the contract for processing replies from submessages.
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    match msg {
-        Reply {
-            id: INSTANTIATE_TOKEN_REPLY_ID,
-            result:
-                SubMsgResult::Ok(SubMsgResponse {
-                    data: Some(data), ..
-                }),
-        } => {
-            let mut config = CONFIG.load(deps.storage)?;
-
-            if config.xastro_token_addr != Addr::unchecked("") {
-                return Err(ContractError::Unauthorized {});
-            }
-
-            let init_response = parse_instantiate_response_data(data.as_slice())
-                .map_err(|e| StdError::generic_err(format!("{e}")))?;
-
-            config.xastro_token_addr = deps.api.addr_validate(&init_response.contract_address)?;
-
-            CONFIG.save(deps.storage, &config)?;
-
-            Ok(Response::new())
-        }
-        _ => Err(ContractError::FailedToParseReply {}),
-    }
-}
+// ... (konstanta dan fungsi lainnya)
 
 /// Receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
 ///
 /// * **cw20_msg** CW20 message to process.
-fn receive_cw20(
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn receive_cw20(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -178,9 +71,13 @@ fn receive_cw20(
             ]))
         }
         // Handle other cases if needed
-        _ => {Err(ContractError::InvalidCw20Hook {}),
+        _ => Err(ContractError::InvalidCw20Hook {}),
     }
-}messages.push(wasm_execute(
+} // tutup match
+
+// ... (fungsi lainnya)
+
+ messages.push(wasm_execute(
  config.xastro_token_addr.clone(),
                     &Cw20ExecuteMsg::Mint {
                         recipient: env.contract.address.to_string(),
