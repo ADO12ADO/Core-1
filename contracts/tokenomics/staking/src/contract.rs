@@ -230,14 +230,16 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::TotalShares {} => {
             to_binary(&query_supply(&deps.querier, &config.xastro_token_addr)?)
         }
-        QueryMsg::TotalDeposit {} => to_binary(&query_token_balance(
-            &deps.querier,
-            &config.astro_token_addr,
-            env.contract.address,
-        )?),
+        QueryMsg::TotalDeposit {} => {
+            let balance = query_token_balance(
+                &deps.querier,
+                &config.astro_token_addr,
+                env.contract.address,
+            )?;
+            to_binary(&balance)?
+        }
     }
 }
-
 /// ## Description
 /// Used for migration of contract. Returns the default object of type [`Response`].
 /// ## Params
