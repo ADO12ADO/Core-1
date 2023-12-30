@@ -348,17 +348,16 @@ pub fn execute_mint(
     let mut config = TOKEN_INFO.load(deps.storage)?;
     check_minter(&info.sender, &config)?;
 
-    // Update supply and enforce cap
-    config.total_supply = config
-        .total_supply
-        .checked_add(amount)
-        .map_err(StdError::from)?;
+    // Ensure minting won't exceed the supply cap
     if let Some(limit) = config.get_cap() {
-        if config.total_supply > limit {
+        let new_total_supply = config.total_supply.checked_add(amount).map_err(StdError::from)?;
+        if new_total_supply > limit {
             return Err(ContractError::CannotExceedCap {});
         }
     }
 
+    // Update supply
+    config.total_supply = config.total_supply.checked_add(amount).map_err(StdError::from)?;
     TOKEN_INFO.save(deps.storage, &config)?;
 
     capture_total_supply_history(deps.storage, &env, config.total_supply)?;
@@ -845,4 +844,4 @@ mod tests {
             }
         }
     }
-}
+                        }
