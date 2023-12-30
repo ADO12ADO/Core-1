@@ -236,7 +236,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
                 &config.astro_token_addr,
                 env.contract.address,
             )?;
-            to_binary(&balance)?
+            Ok(to_binary(&balance)?)
         }
     }
 }
