@@ -20,6 +20,9 @@ pub enum ContractError {
     #[error("Insufficient amount of Stake")]
     StakeAmountTooSmall {},
 
+    #[error("Exceeds maximum total stake")]
+    ExceedsMaximumTotalStake {},  // Tambahkan variant ini
+
     #[error("Failed to parse or process reply message")]
     FailedToParseReply {},
 }
