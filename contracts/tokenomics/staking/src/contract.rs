@@ -1,7 +1,7 @@
 use cosmwasm_std::{
-    attr, entry_point, from_binary, from_json, to_binary, to_json_binary, wasm_execute, Addr,
-    Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdError,
-    StdResult, SubMsg, SubMsgResponse, SubMsgResult, Uint128, WasmMsg,
+    attr, entry_point, from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps,
+    DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
+    SubMsgResponse, SubMsgResult, Uint128, WasmMsg,
 };
 use cw_utils::parse_instantiate_response_data;
 
@@ -17,13 +17,13 @@ use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
 /// Contract name that is used for migration.
-const CONTRACT_NAME: &str = "astroport-staking";
+const CONTRACT_NAME: &str = "ito-staking";
 /// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// xASTRO information.
-const TOKEN_NAME: &str = "Staked Astroport";
-const TOKEN_SYMBOL: &str = "xASTRO";
+/// ITO information.
+const TOKEN_NAME: &str = "Staked Ito";
+const TOKEN_SYMBOL: &str = "ITO";
 
 /// A `reply` call code ID used for sub-messages.
 const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
@@ -41,6 +41,7 @@ pub fn instantiate(
 ) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    // Store config
     CONFIG.save(
         deps.storage,
         &Config {
@@ -49,6 +50,7 @@ pub fn instantiate(
         },
     )?;
 
+    // Create the ITO token
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
             admin: Some(msg.owner),
@@ -65,7 +67,7 @@ pub fn instantiate(
                 marketing: msg.marketing,
             })?,
             funds: vec![],
-            label: String::from("Staked Astroport Token"),
+            label: String::from("Staked Ito Token"),
         }
         .into(),
         id: INSTANTIATE_TOKEN_REPLY_ID,
@@ -88,11 +90,16 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    // Check if the sender is the owner
+    let config: Config = CONFIG.load(deps.storage)?;
+    if info.sender != config.owner {
+        return Err(ContractError::Unauthorized {});
+    }
+
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
     }
 }
-
 /// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
@@ -144,19 +151,22 @@ fn receive_cw20(
     )?;
     let total_shares = query_supply(&deps.querier, &config.xastro_token_addr)?;
 
-    match from_json::<Cw20HookMsg>(&cw20_msg.msg)? {
+    match from_binary(&cw20_msg.msg)? {
         Cw20HookMsg::Enter {} => {
             let mut messages = vec![];
             if info.sender != config.astro_token_addr {
                 return Err(ContractError::Unauthorized {});
             }
 
+            // In a CW20 `send`, the total balance of the recipient is already increased.
+            // To properly calculate the total amount of ASTRO deposited in staking, we should subtract the user deposit from the pool
             total_deposit -= amount;
             let mint_amount: Uint128 = if total_shares.is_zero() || total_deposit.is_zero() {
                 amount = amount
                     .checked_sub(MINIMUM_STAKE_AMOUNT)
                     .map_err(|_| ContractError::MinimumStakeAmountError {})?;
 
+                // amount cannot become zero after minimum stake subtraction
                 if amount.is_zero() {
                     return Err(ContractError::MinimumStakeAmountError {});
                 }
@@ -177,7 +187,8 @@ fn receive_cw20(
                     .checked_div(total_deposit)?;
 
                 if amount.is_zero() {
-                    return Err(ContractError::StakeAmountTooSmall{};
+                    return Err(ContractError::StakeAmountTooSmall {});
+                }
 
                 amount
             };
@@ -207,6 +218,7 @@ fn receive_cw20(
                 .checked_mul(total_deposit)?
                 .checked_div(total_shares)?;
 
+            // Burn share
             let res = Response::new()
                 .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: config.xastro_token_addr.to_string(),
@@ -237,9 +249,9 @@ fn receive_cw20(
 /// ## Queries
 /// * **QueryMsg::Config {}** Returns the staking contract configuration using a [`ConfigResponse`] object.
 ///
-/// * **QueryMsg::TotalShares {}** Returns the total xASTRO supply using a [`Uint128`] object.
+/// * **QueryMsg::TotalShares {}** Returns the total ITO supply using a [`Uint128`] object.
 ///
-/// * **QueryMsg::TotalDeposit {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
+/// * **QueryMsg::Config {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let config = CONFIG.load(deps.storage)?;
@@ -272,7 +284,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
-        "astroport-staking" => match contract_version.version.as_ref() {
+        "ito-staking" => match contract_version.version.as_ref() {
             "1.0.0" | "1.0.1" | "1.0.2" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
@@ -286,4 +298,4 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         .add_attribute("previous_contract_version", &contract_version.version)
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
-}
+                }
