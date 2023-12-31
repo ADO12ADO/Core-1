@@ -1,7 +1,7 @@
 use cosmwasm_std::{
-    attr, entry_point, from_binary, to_json_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps,
-    DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
-    SubMsgResponse, SubMsgResult, Uint128, WasmMsg,
+    attr, entry_point, from_binary, from_json, to_binary, to_json_binary, wasm_execute, Addr,
+    Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdError,
+    StdResult, SubMsg, SubMsgResponse, SubMsgResult, Uint128, WasmMsg,
 };
 use cw_utils::parse_instantiate_response_data;
 
@@ -21,7 +21,7 @@ const CONTRACT_NAME: &str = "astroport-staking";
 /// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-// xASTRO information.
+/// xASTRO information.
 const TOKEN_NAME: &str = "Staked Astroport";
 const TOKEN_SYMBOL: &str = "xASTRO";
 
@@ -41,16 +41,6 @@ pub fn instantiate(
 ) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // Ensure that the sender is the owner
-    if msg.owner != env.contract.address {
-        // Replace this line:
-// return Err(ContractError::Unauthorized {});
-// with:
-return Err(StdError::Unauthorized { backtrace: None });
-
-    }
-
-    // Store config
     CONFIG.save(
         deps.storage,
         &Config {
@@ -59,12 +49,11 @@ return Err(StdError::Unauthorized { backtrace: None });
         },
     )?;
 
-    // Create the xASTRO token
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
             admin: Some(msg.owner),
             code_id: msg.token_code_id,
-            msg: to_json_binary(&TokenInstantiateMsg {
+            msg: to_binary(&TokenInstantiateMsg {
                 name: TOKEN_NAME.to_string(),
                 symbol: TOKEN_SYMBOL.to_string(),
                 decimals: 6,
@@ -101,8 +90,6 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
-        // Add a check to ensure that only the admin can execute this message
-        _ if info.sender != env.contract.address => Err(ContractError::Unauthorized {}),
     }
 }
 
@@ -120,11 +107,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
             let mut config = CONFIG.load(deps.storage)?;
 
             if config.xastro_token_addr != Addr::unchecked("") {
-                // Replace this line:
-// return Err(ContractError::Unauthorized {});
-// with:
-return Err(StdError::Unauthorized { backtrace: None });
-
+                return Err(ContractError::Unauthorized {});
             }
 
             let init_response = parse_instantiate_response_data(data.as_slice())
@@ -149,7 +132,7 @@ fn receive_cw20(
     info: MessageInfo,
     cw20_msg: Cw20ReceiveMsg,
 ) -> Result<Response, ContractError> {
-        let config: Config = CONFIG.load(deps.storage)?;
+    let config: Config = CONFIG.load(deps.storage)?;
 
     let recipient = cw20_msg.sender;
     let mut amount = cw20_msg.amount;
@@ -161,30 +144,19 @@ fn receive_cw20(
     )?;
     let total_shares = query_supply(&deps.querier, &config.xastro_token_addr)?;
 
-    // Replace this line:
-// match from_binary(&cw20_msg.msg)? {
-// with:
-match from_json::<Cw20HookMsg>(&cw20_msg.msg)? {
-
+    match from_json::<Cw20HookMsg>(&cw20_msg.msg)? {
         Cw20HookMsg::Enter {} => {
             let mut messages = vec![];
             if info.sender != config.astro_token_addr {
-                // Replace this line:
-// return Err(ContractError::Unauthorized {});
-// with:
-return Err(StdError::Unauthorized { backtrace: None });
-
+                return Err(ContractError::Unauthorized {});
             }
 
-            // In a CW20 `send`, the total balance of the recipient is already increased.
-            // To properly calculate the total amount of ASTRO deposited in staking, we should subtract the user deposit from the pool
             total_deposit -= amount;
             let mint_amount: Uint128 = if total_shares.is_zero() || total_deposit.is_zero() {
                 amount = amount
                     .checked_sub(MINIMUM_STAKE_AMOUNT)
                     .map_err(|_| ContractError::MinimumStakeAmountError {})?;
 
-                // amount cannot become zero after minimum stake subtraction
                 if amount.is_zero() {
                     return Err(ContractError::MinimumStakeAmountError {});
                 }
@@ -205,14 +177,13 @@ return Err(StdError::Unauthorized { backtrace: None });
                     .checked_div(total_deposit)?;
 
                 if amount.is_zero() {
-                    return Err(ContractError::StakeAmountTooSmall {});
-                }
+                    return Err(ContractError::StakeAmountTooSmall{};
 
                 amount
             };
 
             messages.push(wasm_execute(
-                config.xastro_token_addr.clone(),
+                config.xastro_token_addr,
                 &Cw20ExecuteMsg::Mint {
                     recipient: recipient.clone(),
                     amount: mint_amount,
@@ -229,27 +200,22 @@ return Err(StdError::Unauthorized { backtrace: None });
         }
         Cw20HookMsg::Leave {} => {
             if info.sender != config.xastro_token_addr {
-                // Replace this line:
-// return Err(ContractError::Unauthorized {});
-// with:
-return Err(StdError::Unauthorized { backtrace: None });
-
+                return Err(ContractError::Unauthorized {});
             }
 
             let what = amount
                 .checked_mul(total_deposit)?
                 .checked_div(total_shares)?;
 
-            // Burn share
             let res = Response::new()
                 .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: config.xastro_token_addr.to_string(),
-                    msg: to_json_binary(&Cw20ExecuteMsg::Burn { amount })?,
+                    msg: to_binary(&Cw20ExecuteMsg::Burn { amount })?,
                     funds: vec![],
                 }))
                 .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: config.astro_token_addr.to_string(),
-                    msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
+                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
                         recipient: recipient.clone(),
                         amount: what,
                     })?,
@@ -273,19 +239,19 @@ return Err(StdError::Unauthorized { backtrace: None });
 ///
 /// * **QueryMsg::TotalShares {}** Returns the total xASTRO supply using a [`Uint128`] object.
 ///
-/// * **QueryMsg::Config {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
+/// * **QueryMsg::TotalDeposit {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let config = CONFIG.load(deps.storage)?;
     match msg {
-        QueryMsg::Config {} => Ok(to_json_binary(&ConfigResponse {
+        QueryMsg::Config {} => Ok(to_binary(&ConfigResponse {
             deposit_token_addr: config.astro_token_addr,
             share_token_addr: config.xastro_token_addr,
         })?),
         QueryMsg::TotalShares {} => {
-            to_json_binary(&query_supply(&deps.querier, &config.xastro_token_addr)?)
+            to_binary(&query_supply(&deps.querier, &config.xastro_token_addr)?)
         }
-        QueryMsg::TotalDeposit {} => to_json_binary(&query_token_balance(
+        QueryMsg::TotalDeposit {} => to_binary(&query_token_balance(
             &deps.querier,
             &config.astro_token_addr,
             env.contract.address,
@@ -320,4 +286,4 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         .add_attribute("previous_contract_version", &contract_version.version)
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
-                    }
+}
