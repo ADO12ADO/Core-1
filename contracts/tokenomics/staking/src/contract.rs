@@ -43,7 +43,11 @@ pub fn instantiate(
 
     // Ensure that the sender is the owner
     if msg.owner != env.contract.address {
-        return Err(ContractError::Unauthorized {});
+        // Replace this line:
+// return Err(ContractError::Unauthorized {});
+// with:
+return Err(StdError::Unauthorized { backtrace: None });
+
     }
 
     // Store config
@@ -116,7 +120,11 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
             let mut config = CONFIG.load(deps.storage)?;
 
             if config.xastro_token_addr != Addr::unchecked("") {
-                return Err(ContractError::Unauthorized {});
+                // Replace this line:
+// return Err(ContractError::Unauthorized {});
+// with:
+return Err(StdError::Unauthorized { backtrace: None });
+
             }
 
             let init_response = parse_instantiate_response_data(data.as_slice())
@@ -153,11 +161,19 @@ fn receive_cw20(
     )?;
     let total_shares = query_supply(&deps.querier, &config.xastro_token_addr)?;
 
-    match from_binary(&cw20_msg.msg)? {
+    // Replace this line:
+// match from_binary(&cw20_msg.msg)? {
+// with:
+match from_json::<Cw20HookMsg>(&cw20_msg.msg)? {
+
         Cw20HookMsg::Enter {} => {
             let mut messages = vec![];
             if info.sender != config.astro_token_addr {
-                return Err(ContractError::Unauthorized {});
+                // Replace this line:
+// return Err(ContractError::Unauthorized {});
+// with:
+return Err(StdError::Unauthorized { backtrace: None });
+
             }
 
             // In a CW20 `send`, the total balance of the recipient is already increased.
@@ -213,7 +229,11 @@ fn receive_cw20(
         }
         Cw20HookMsg::Leave {} => {
             if info.sender != config.xastro_token_addr {
-                return Err(ContractError::Unauthorized {});
+                // Replace this line:
+// return Err(ContractError::Unauthorized {});
+// with:
+return Err(StdError::Unauthorized { backtrace: None });
+
             }
 
             let what = amount
@@ -300,4 +320,4 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         .add_attribute("previous_contract_version", &contract_version.version)
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
-}
+                    }
