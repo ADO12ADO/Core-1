@@ -31,13 +31,6 @@ const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
 /// Minimum initial xastro share
 pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
 
-// Add cap field to Config struct
-pub struct Config {
-    astro_token_addr: Addr,
-    xastro_token_addr: Addr,
-    cap: Option<Uint128>,  // New field for the cap
-};
-
 /// Creates a new contract with the specified parameters in the [`InstantiateMsg`].
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -48,16 +41,12 @@ pub fn instantiate(
 ) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // Set the initial cap value
-    let cap: Option<Uint128> = Some(Uint128::new(1000000));  // Set your initial cap value
-
-    // Store config with cap
+    // Store config
     CONFIG.save(
         deps.storage,
         &Config {
             astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
             xastro_token_addr: Addr::unchecked(""),
-            cap,
         },
     )?;
 
@@ -73,7 +62,7 @@ pub fn instantiate(
                 initial_balances: vec![],
                 mint: Some(MinterResponse {
                     minter: env.contract.address.to_string(),
-                    cap,
+                    cap: None,
                 }),
                 marketing: msg.marketing,
             })?,
@@ -196,7 +185,7 @@ fn receive_cw20(
                     return Err(ContractError::StakeAmountTooSmall {});
                 }
 
-                                amount
+                amount
             };
 
             messages.push(wasm_execute(
@@ -304,4 +293,4 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         .add_attribute("previous_contract_version", &contract_version.version)
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
-}
+                }
