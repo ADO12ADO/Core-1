@@ -76,7 +76,6 @@ pub fn instantiate(
 
     Ok(Response::new().add_submessages(sub_msg))
 }
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -84,10 +83,10 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    // Pemeriksaan apakah pengguna yang memanggil fungsi adalah admin
     let config: Config = CONFIG.load(deps.storage)?;
 
-    if info.sender != config.astro_token_addr {
+    // Check if the sender is the admin (owner)
+    if info.sender != config.owner {
         return Err(ContractError::Unauthorized {});
     }
 
@@ -95,7 +94,6 @@ pub fn execute(
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
     }
 }
-
 pub fn receive_cw20(
     deps: DepsMut,
     env: Env,
