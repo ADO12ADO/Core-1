@@ -262,7 +262,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     let contract_version = get_contract_version(deps.storage)?;
 
     // Pemeriksaan apakah pengguna yang memanggil fungsi adalah admin
-    if contract_version.contract.as_str() != "ito-staking" || contract_version.version.as_str() != "1.1.0" {
+    if contract_version.contract.as_str() != "ito-staking" || contract_version.version.as_str() != "1.0.0" {
         return Err(ContractError::Unauthorized {});
     }
 
