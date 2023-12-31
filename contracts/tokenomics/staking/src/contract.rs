@@ -121,14 +121,96 @@ pub fn receive_cw20(
 
     match from_binary(&cw20_msg.msg)? {
         Cw20HookMsg::Enter {} => {
-            // ... (sisa kode tetap tidak berubah)
+            let mut messages = vec![];
+            if info.sender != config.astro_token_addr {
+                return Err(ContractError::Unauthorized {});
+            }
+
+            // In a CW20 `send`, the total balance of the recipient is already increased.
+            // To properly calculate the total amount of ASTRO deposited in staking, we should subtract the user deposit from the pool
+            total_deposit -= amount;
+            let mint_amount: Uint128 = if total_shares.is_zero() || total_deposit.is_zero() {
+                amount = amount
+                    .checked_sub(MINIMUM_STAKE_AMOUNT)
+                    .map_err(|_| ContractError::MinimumStakeAmountError {})?;
+
+                // amount cannot become zero after minimum stake subtraction
+                if amount.is_zero() {
+                    return Err(ContractError::MinimumStakeAmountError {});
+                }
+
+                messages.push(wasm_execute(
+                    config.xastro_token_addr.clone(),
+                    &Cw20ExecuteMsg::Mint {
+                        recipient: env.contract.address.to_string(),
+                        amount: MINIMUM_STAKE_AMOUNT,
+                    },
+                    vec![],
+                )?);
+
+                amount
+            } else {
+                amount = amount
+                    .checked_mul(total_shares)?
+                    .checked_div(total_deposit)?;
+
+                if amount.is_zero() {
+                    return Err(ContractError::StakeAmountTooSmall {});
+                }
+
+                amount
+            };
+
+            messages.push(wasm_execute(
+                config.xastro_token_addr,
+                &Cw20ExecuteMsg::Mint {
+                    recipient: recipient.clone(),
+                    amount: mint_amount,
+                },
+                vec![],
+            )?);
+
+            Ok(Response::new().add_messages(messages).add_attributes(vec![
+                attr("action", "enter"),
+                attr("recipient", recipient),
+                attr("astro_amount", cw20_msg.amount),
+                attr("xastro_amount", mint_amount),
+            ]))
         }
         Cw20HookMsg::Leave {} => {
-            // ... (sisa kode tetap tidak berubah)
+            if info.sender != config.xastro_token_addr {
+                return Err(ContractError::Unauthorized {});
+            }
+
+            let what = amount
+                .checked_mul(total_deposit)?
+                .checked_div(total_shares)?;
+
+            // Burn share
+            let res = Response::new()
+                .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: config.xastro_token_addr.to_string(),
+                    msg: to_binary(&Cw20ExecuteMsg::Burn { amount })?,
+                    funds: vec![],
+                }))
+                .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: config.astro_token_addr.to_string(),
+                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                        recipient: recipient.clone(),
+                        amount: what,
+                    })?,
+                    funds: vec![],
+                }));
+
+            Ok(res.add_attributes(vec![
+                attr("action", "leave"),
+                attr("recipient", recipient),
+                attr("xastro_amount", cw20_msg.amount),
+                attr("astro_amount", what),
+            ]))
         }
     }
 }
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match msg {
