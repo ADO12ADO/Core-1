@@ -47,6 +47,7 @@ pub fn instantiate(
         &Config {
             astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
             xastro_token_addr: Addr::unchecked(""),
+            owner: Addr::unchecked(""),
         },
     )?;
 
