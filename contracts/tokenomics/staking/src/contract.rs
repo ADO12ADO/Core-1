@@ -259,6 +259,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Config {} => Ok(to_binary(&ConfigResponse {
             deposit_token_addr: config.astro_token_addr,
             share_token_addr: config.xastro_token_addr,
+            owner: config.owner.clone(),
         })?),
         QueryMsg::TotalShares {} => {
             to_binary(&query_supply(&deps.querier, &config.xastro_token_addr)?)
