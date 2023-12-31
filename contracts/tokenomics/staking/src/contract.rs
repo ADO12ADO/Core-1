@@ -233,19 +233,15 @@ pub fn receive_cw20(
         }
     }
 }
-
-// ... (lanjutan dari kode sebelumnya)
-// ... (lanjutan dari kode sebelumnya)
-
 // Exposes all the queries available in the contract.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let config = CONFIG.load(deps.storage)?;
     match msg {
         QueryMsg::Config {} => {
-            Ok(to_binary(&ConfigResponse {
-                deposit_token_addr: config.astro_token_addr.clone(),
-                share_token_addr: config.xastro_token_addr.clone(),
+            Ok(to_binary(&Config {
+                astro_token_addr: config.astro_token_addr.clone(),
+                xastro_token_addr: config.xastro_token_addr.clone(),
                 owner: config.owner.clone(),
             })?)
         }
