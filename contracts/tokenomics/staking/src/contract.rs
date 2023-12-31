@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    attr, entry_point, from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps,
+    attr, entry_point, from_binary, to_json_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps,
     DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
     SubMsgResponse, SubMsgResult, Uint128, WasmMsg,
 };
@@ -16,9 +16,9 @@ use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
-// Contract name that is used for migration.
+/// Contract name that is used for migration.
 const CONTRACT_NAME: &str = "astroport-staking";
-// Contract version that is used for migration.
+/// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // xASTRO information.
@@ -41,8 +41,8 @@ pub fn instantiate(
 ) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // Ensure that the sender is the admin
-    if msg.admin != env.contract.address {
+    // Ensure that the sender is the owner
+    if msg.owner != env.contract.address {
         return Err(ContractError::Unauthorized {});
     }
 
@@ -58,9 +58,9 @@ pub fn instantiate(
     // Create the xASTRO token
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
-            admin: Some(msg.admin),
+            admin: Some(msg.owner),
             code_id: msg.token_code_id,
-            msg: to_binary(&TokenInstantiateMsg {
+            msg: to_json_binary(&TokenInstantiateMsg {
                 name: TOKEN_NAME.to_string(),
                 symbol: TOKEN_SYMBOL.to_string(),
                 decimals: 6,
@@ -141,7 +141,7 @@ fn receive_cw20(
     info: MessageInfo,
     cw20_msg: Cw20ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    let config: Config = CONFIG.load(deps.storage)?;
+        let config: Config = CONFIG.load(deps.storage)?;
 
     let recipient = cw20_msg.sender;
     let mut amount = cw20_msg.amount;
@@ -195,8 +195,8 @@ fn receive_cw20(
                 amount
             };
 
-                        messages.push(wasm_execute(
-                config.xastro_token_addr,
+            messages.push(wasm_execute(
+                config.xastro_token_addr.clone(),
                 &Cw20ExecuteMsg::Mint {
                     recipient: recipient.clone(),
                     amount: mint_amount,
@@ -224,12 +224,12 @@ fn receive_cw20(
             let res = Response::new()
                 .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: config.xastro_token_addr.to_string(),
-                    msg: to_binary(&Cw20ExecuteMsg::Burn { amount })?,
+                    msg: to_json_binary(&Cw20ExecuteMsg::Burn { amount })?,
                     funds: vec![],
                 }))
                 .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: config.astro_token_addr.to_string(),
-                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                    msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
                         recipient: recipient.clone(),
                         amount: what,
                     })?,
@@ -258,14 +258,14 @@ fn receive_cw20(
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let config = CONFIG.load(deps.storage)?;
     match msg {
-        QueryMsg::Config {} => Ok(to_binary(&ConfigResponse {
+        QueryMsg::Config {} => Ok(to_json_binary(&ConfigResponse {
             deposit_token_addr: config.astro_token_addr,
             share_token_addr: config.xastro_token_addr,
         })?),
         QueryMsg::TotalShares {} => {
-            to_binary(&query_supply(&deps.querier, &config.xastro_token_addr)?)
+            to_json_binary(&query_supply(&deps.querier, &config.xastro_token_addr)?)
         }
-        QueryMsg::TotalDeposit {} => to_binary(&query_token_balance(
+        QueryMsg::TotalDeposit {} => to_json_binary(&query_token_balance(
             &deps.querier,
             &config.astro_token_addr,
             env.contract.address,
