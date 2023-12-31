@@ -9,7 +9,10 @@ pub struct Config {
     pub astro_token_addr: Addr,
     /// The ITO token contract address
     pub xastro_token_addr: Addr,
+    // Add this line for the owner field
+    pub owner: Addr, 
 }
+
 
 /// Stores the contract config at the given key
 pub const CONFIG: Item<Config> = Item::new("config");
