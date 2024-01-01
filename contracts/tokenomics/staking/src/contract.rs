@@ -278,6 +278,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         _ => return Err(ContractError::MigrationError {}),
     }
 
+    // Pastikan struktur Config diupdate dengan field owner
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     Ok(Response::new()
