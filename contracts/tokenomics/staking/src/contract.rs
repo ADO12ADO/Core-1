@@ -123,8 +123,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
 }
 
 // Receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn receive_cw20(
+fn receive_cw20(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
