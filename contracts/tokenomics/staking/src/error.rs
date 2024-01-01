@@ -22,6 +22,9 @@ pub enum ContractError {
 
     #[error("Failed to parse or process reply message")]
     FailedToParseReply {},
+    
+    #[error("Total supply max 21 million")]
+    ExceedsOverallDepositLimit {},
 }
 
 impl From<OverflowError> for ContractError {
