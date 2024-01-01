@@ -39,14 +39,13 @@ pub fn instantiate(
 
     // Store config
     CONFIG.save(
-        deps.storage,
-        &Config {
-            astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
-            xastro_token_addr: Addr::unchecked(""),
-            owner: Addr::unchecked(""),
-        },
-    )?;
-
+    deps.storage,
+    &Config {
+        astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
+        xastro_token_addr: Addr::unchecked(""), // Ganti dengan alamat yang sesuai
+        owner: deps.api.addr_validate("terra1sr2e6trtlptghkse8ad6hstct6qza5wpxrclr5")?, // Ganti dengan alamat pemilik
+    },
+)?;
     // Create the ITO token
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
