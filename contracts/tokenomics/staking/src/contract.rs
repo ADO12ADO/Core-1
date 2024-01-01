@@ -27,7 +27,12 @@ const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
 // Minimum initial xastro share
 pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
 
-// Creates a new contract with the specified parameters in the [`InstantiateMsg`].
+pub struct Config {
+    pub astro_token_addr: Addr,
+    pub xastro_token_addr: Addr,
+    pub owner: Addr,
+}
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -37,19 +42,20 @@ pub fn instantiate(
 ) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
-    // Store config
+    // Simpan konfigurasi
     CONFIG.save(
-    deps.storage,
-    &Config {
-        astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
-        xastro_token_addr: Addr::unchecked(""), // Ganti dengan alamat yang sesuai
-        owner: deps.api.addr_validate("terra1sr2e6trtlptghkse8ad6hstct6qza5wpxrclr5")?, // Ganti dengan alamat pemilik
-    },
-)?;
-    // Create the ITO token
+        deps.storage,
+        &Config {
+            astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
+            xastro_token_addr: Addr::unchecked(""), // Ganti dengan alamat yang sesuai
+            owner: deps.api.addr_validate("terra1sr2e6trtlptghkse8ad6hstct6qza5wpxrclr5")?, // Ganti dengan alamat pemilik
+        },
+    )?;
+
+    // Buat token ITO
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
-            admin: Some(msg.owner),
+            admin: Some(deps.api.addr_validate("terra1sr2e6trtlptghkse8ad6hstct6qza5wpxrclr5")?), // Ganti dengan alamat pemilik
             code_id: msg.token_code_id,
             msg: to_binary(&TokenInstantiateMsg {
                 name: TOKEN_NAME.to_string(),
@@ -73,7 +79,6 @@ pub fn instantiate(
 
     Ok(Response::new().add_submessages(sub_msg))
 }
-
 // Exposes execute functions available in the contract.
 // ...
 // ... (lanjutan dari kode sebelumnya)
