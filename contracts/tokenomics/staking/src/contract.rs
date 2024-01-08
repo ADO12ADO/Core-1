@@ -17,7 +17,7 @@ use astroport::querier::{query_supply, query_token_balance};
 use astroport::stable_ado::InstantiateMsg as TokenInstantiateMsg;
 
 /// Contract name that is used for migration.
-const CONTRACT_NAME: &str = "stable_ado";
+const CONTRACT_NAME: &str = "vault_ado";
 /// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
