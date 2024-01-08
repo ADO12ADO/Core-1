@@ -22,7 +22,7 @@ pub enum QueryMsg {
     /// TokenInfo returns the contract's metadata - name, decimals, supply, etc.
     #[returns(TokenInfoResponse)]
     TokenInfo {},
-    /// Returns who can mint ITO and the hard cap on maximum tokens after minting.
+    /// Returns who can mint xADO and the hard cap on maximum tokens after minting.
     #[returns(Option<MinterResponse>)]
     Minter {},
     /// Allowance returns an amount of tokens the spender can spend from the owner account, 0 if unset.
@@ -35,7 +35,7 @@ pub enum QueryMsg {
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    /// AllAccounts returns all the accounts that have ITO balances. Supports pagination.
+    /// AllAccounts returns all the accounts that have xADO balances. Supports pagination.
     #[returns(AllAccountsResponse)]
     AllAccounts {
         start_after: Option<String>,
@@ -54,7 +54,7 @@ pub enum QueryMsg {
 #[cw_serde]
 pub struct MigrateMsg {}
 
-/// Queries current user's voting power from the ITO contract by timestamp.
+/// Queries current user's voting power from the xADO contract by timestamp.
 ///
 /// * **user** staker for which we calculate the voting power at a specific time.
 ///
