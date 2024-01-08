@@ -150,7 +150,7 @@ fn receive_cw20(
         Cw20HookMsg::Enter {} => {
             // Check if the deposit exceeds the overall limit
             let new_total_deposit = total_deposit + amount;
-            if new_total_deposit > Uint128::new(21_000_000_000_000_000_000_000) {
+            if new_total_deposit > Uint128::new(21_000 _000_000) {
                 return Err(ContractError::ExceedsOverallDepositLimit {});
             }
 
