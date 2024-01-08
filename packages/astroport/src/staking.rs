@@ -40,7 +40,7 @@ pub enum QueryMsg {
 pub struct ConfigResponse {
     /// The ASTRO token address
     pub deposit_token_addr: Addr,
-    /// The xADO token address
+    /// The ADO token address
     pub share_token_addr: Addr,
 }
 
@@ -51,8 +51,8 @@ pub struct MigrateMsg {}
 /// This structure describes a CW20 hook message.
 #[cw_serde]
 pub enum Cw20HookMsg {
-    /// Deposits ASTRO in exchange for xADO
+    /// Deposits ASTRO in exchange for ADO
     Enter {},
-    /// Burns xADO in exchange for ASTRO
+    /// Burns ADO in exchange for ASTRO
     Leave {},
 }

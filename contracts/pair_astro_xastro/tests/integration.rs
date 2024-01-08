@@ -205,7 +205,7 @@ fn instantiate_astroport(mut router: &mut App, owner: &Addr) -> AstroportContrac
             owner.clone(),
             &msg,
             &[],
-            String::from("ASTRO-xADO pair"),
+            String::from("ASTRO-ADO pair"),
             None,
         )
         .unwrap();
@@ -279,7 +279,7 @@ fn test_pair_instantiation() {
             owner.clone(),
             &msg,
             &[],
-            String::from("ASTRO-xADO pair"),
+            String::from("ASTRO-ADO pair"),
             None,
         )
         .unwrap_err();
@@ -316,7 +316,7 @@ fn test_pair_instantiation() {
             owner.clone(),
             &msg,
             &[],
-            String::from("ASTRO-xADO pair"),
+            String::from("ASTRO-ADO pair"),
             None,
         )
         .unwrap();
@@ -355,7 +355,7 @@ fn test_pair_swap() {
         user2.clone(),
     );
 
-    // Test simulate and reverse simulate with empty staking (ASTRO->xADO)
+    // Test simulate and reverse simulate with empty staking (ASTRO->ADO)
     let res: SimulationResponse = router
         .wrap()
         .query_wasm_smart(
@@ -401,7 +401,7 @@ fn test_pair_swap() {
         }
     );
 
-    // Test Swap operation ASTRO->xADO
+    // Test Swap operation ASTRO->ADO
     router
         .execute_contract(
             user1.clone(),
@@ -442,7 +442,7 @@ fn test_pair_swap() {
         .unwrap();
     assert_user_balance(&mut router, &contracts.xastro_instance, &user2, 30_000u64);
 
-    // Test simulate and reverse simulate (ASTRO->xADO)
+    // Test simulate and reverse simulate (ASTRO->ADO)
     let res: SimulationResponse = router
         .wrap()
         .query_wasm_smart(
@@ -488,7 +488,7 @@ fn test_pair_swap() {
         }
     );
 
-    // Test simulate and reverse simulate (xADO->ASTRO)
+    // Test simulate and reverse simulate (ADO->ASTRO)
     let res: SimulationResponse = router
         .wrap()
         .query_wasm_smart(
@@ -534,7 +534,7 @@ fn test_pair_swap() {
         }
     );
 
-    // Test Swap operation ASTRO->xADO
+    // Test Swap operation ASTRO->ADO
     router
         .execute_contract(
             user1.clone(),

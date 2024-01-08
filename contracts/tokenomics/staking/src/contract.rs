@@ -21,9 +21,9 @@ const CONTRACT_NAME: &str = "Vault-ADO-Token";
 /// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// xADO information.
-const TOKEN_NAME: &str = "xADO";
-const TOKEN_SYMBOL: &str = "xADO";
+/// ADO information.
+const TOKEN_NAME: &str = "ADO";
+const TOKEN_SYMBOL: &str = "ADO";
 
 /// A `reply` call code ID used for sub-messages.
 const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
@@ -50,7 +50,7 @@ pub fn instantiate(
         },
     )?;
 
-    // Create the xADO token
+    // Create the ADO token
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
             admin: Some(msg.owner),
@@ -67,7 +67,7 @@ pub fn instantiate(
                 marketing: msg.marketing,
             })?,
             funds: vec![],
-            label: String::from("Vault xADO"),
+            label: String::from("Vault ADO"),
         }
         .into(),
         id: INSTANTIATE_TOKEN_REPLY_ID,
@@ -250,7 +250,7 @@ fn receive_cw20(
 /// ## Queries
 /// * **QueryMsg::Config {}** Returns the staking contract configuration using a [`ConfigResponse`] object.
 ///
-/// * **QueryMsg::TotalShares {}** Returns the total xADO supply using a [`Uint128`] object.
+/// * **QueryMsg::TotalShares {}** Returns the total ADO supply using a [`Uint128`] object.
 ///
 /// * **QueryMsg::Config {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
 #[cfg_attr(not(feature = "library"), entry_point)]
