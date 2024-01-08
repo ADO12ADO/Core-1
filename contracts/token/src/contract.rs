@@ -13,7 +13,7 @@ use astroport::asset::addr_opt_validate;
 use astroport::token::{InstantiateMsg, MigrateMsg};
 
 /// Contract name that is used for migration.
-const CONTRACT_NAME: &str = "astroport-token";
+const CONTRACT_NAME: &str = "ADO-Token";
 /// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -167,7 +167,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
-        "astroport-token" => match contract_version.version.as_ref() {
+        "ADO-Token" => match contract_version.version.as_ref() {
             "1.1.1" | "1.1.0" => {}
             _ => {
                 return Err(StdError::generic_err(
