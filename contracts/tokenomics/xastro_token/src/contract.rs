@@ -12,7 +12,7 @@ use cw20_base::allowances::{
 
 use crate::state::{capture_total_supply_history, check_minter, get_total_supply_at, BALANCES};
 use astroport::asset::addr_opt_validate;
-use astroport::xastro_token::{InstantiateMsg, MigrateMsg, QueryMsg};
+use astroport::Vault-ADO-Token::{InstantiateMsg, MigrateMsg, QueryMsg};
 use cw2::{get_contract_version, set_contract_version};
 use cw20_base::contract::{
     execute_update_marketing, execute_upload_logo, query_download_logo, query_marketing_info,
@@ -711,7 +711,7 @@ mod tests {
     use cosmwasm_std::{Addr, StdError};
 
     use super::*;
-    use astroport::xastro_token::InstantiateMarketingInfo;
+    use astroport::Vault-ADO-Token::InstantiateMarketingInfo;
 
     mod marketing {
         use cw20::DownloadLogoResponse;

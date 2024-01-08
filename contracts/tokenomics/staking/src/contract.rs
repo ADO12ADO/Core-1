@@ -14,7 +14,7 @@ use cw2::{get_contract_version, set_contract_version};
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 
 use astroport::querier::{query_supply, query_token_balance};
-use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
+use astroport::Vault-ADO-Token::InstantiateMsg as TokenInstantiateMsg;
 
 /// Contract name that is used for migration.
 const CONTRACT_NAME: &str = "Vault-Stable";
@@ -46,7 +46,7 @@ pub fn instantiate(
         deps.storage,
         &Config {
             astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
-            xastro_token_addr: Addr::unchecked(""),
+            Vault-ADO-Token_addr: Addr::unchecked(""),
         },
     )?;
 
@@ -108,14 +108,14 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         } => {
             let mut config = CONFIG.load(deps.storage)?;
 
-            if config.xastro_token_addr != Addr::unchecked("") {
+            if config.Vault-ADO-Token_addr != Addr::unchecked("") {
                 return Err(ContractError::Unauthorized {});
             }
 
             let init_response = parse_instantiate_response_data(data.as_slice())
                 .map_err(|e| StdError::generic_err(format!("{e}")))?;
 
-            config.xastro_token_addr = deps.api.addr_validate(&init_response.contract_address)?;
+            config.Vault-ADO-Token_addr = deps.api.addr_validate(&init_response.contract_address)?;
 
             CONFIG.save(deps.storage, &config)?;
 
@@ -144,7 +144,7 @@ fn receive_cw20(
         &config.astro_token_addr,
         env.contract.address.clone(),
     )?;
-    let total_shares = query_supply(&deps.querier, &config.xastro_token_addr)?;
+    let total_shares = query_supply(&deps.querier, &config.Vault-ADO-Token_addr)?;
 
     match from_binary(&cw20_msg.msg)? {
         Cw20HookMsg::Enter {} => {
@@ -173,7 +173,7 @@ fn receive_cw20(
                 }
 
                 messages.push(wasm_execute(
-                    config.xastro_token_addr.clone(),
+                    config.Vault-ADO-Token_addr.clone(),
                     &Cw20ExecuteMsg::Mint {
                         recipient: env.contract.address.to_string(),
                         amount: MINIMUM_STAKE_AMOUNT,
@@ -195,7 +195,7 @@ fn receive_cw20(
             };
 
                         messages.push(wasm_execute(
-                config.xastro_token_addr.clone(),
+                config.Vault-ADO-Token_addr.clone(),
                 &Cw20ExecuteMsg::Mint {
                     recipient: recipient.clone(),
                     amount: mint_amount,
@@ -211,7 +211,7 @@ fn receive_cw20(
             ]))
         }
         Cw20HookMsg::Leave {} => {
-            if info.sender != config.xastro_token_addr {
+            if info.sender != config.Vault-ADO-Token_addr {
                 return Err(ContractError::Unauthorized {});
             }
 
@@ -222,7 +222,7 @@ fn receive_cw20(
             // Burn share
             let res = Response::new()
                 .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-                    contract_addr: config.xastro_token_addr.to_string(),
+                    contract_addr: config.Vault-ADO-Token_addr.to_string(),
                     msg: to_binary(&Cw20ExecuteMsg::Burn { amount })?,
                     funds: vec![],
                 }))
@@ -259,10 +259,10 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => Ok(to_binary(&ConfigResponse {
             deposit_token_addr: config.astro_token_addr,
-            share_token_addr: config.xastro_token_addr,
+            share_token_addr: config.Vault-ADO-Token_addr,
         })?),
         QueryMsg::TotalShares {} => {
-            to_binary(&query_supply(&deps.querier, &config.xastro_token_addr)?)
+            to_binary(&query_supply(&deps.querier, &config.Vault-ADO-Token_addr)?)
         }
         QueryMsg::TotalDeposit {} => to_binary(&query_token_balance(
             &deps.querier,
