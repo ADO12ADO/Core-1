@@ -133,9 +133,9 @@ fn instantiate_contracts(router: &mut App, owner: Addr) -> (Addr, Addr, Addr) {
     let astro_token_code_id = router.store_code(astro_token_contract);
 
     let x_astro_token_contract = Box::new(ContractWrapper::new_with_empty(
-        astroport_vault_ado::contract::execute,
-        astroport_vault_ado::contract::instantiate,
-        astroport_vault_ado::contract::query,
+        astroport_stable_ado::contract::execute,
+        astroport_stable_ado::contract::instantiate,
+        astroport_stable_ado::contract::query,
     ));
 
     let x_astro_token_code_id = router.store_code(x_astro_token_contract);
