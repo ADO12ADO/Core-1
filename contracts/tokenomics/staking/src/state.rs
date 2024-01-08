@@ -8,7 +8,7 @@ pub struct Config {
     /// The ASTRO token contract address
     pub usk_token_addr: Addr,
     /// The ADO token contract address
-    pub Vault_ADO_Token_addr: Addr,
+    pub vault_ado_addr: Addr,
 }
 
 
