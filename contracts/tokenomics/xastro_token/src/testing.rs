@@ -3,7 +3,7 @@ use crate::contract::{
     query_all_accounts, query_balance, query_balance_at,
 };
 use crate::state::get_total_supply_at;
-use astroport::stable_ado::InstantiateMsg;
+use astroport::xastro_token::InstantiateMsg;
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
     Addr, Binary, BlockInfo, ContractInfo, CosmosMsg, Deps, DepsMut, Env, StdError, SubMsg,

@@ -14,7 +14,7 @@ use cw2::{get_contract_version, set_contract_version};
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 
 use astroport::querier::{query_supply, query_token_balance};
-use astroport::stable_ado::InstantiateMsg as TokenInstantiateMsg;
+use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
 /// Contract name that is used for migration.
 const CONTRACT_NAME: &str = "vault_ado";
@@ -46,7 +46,7 @@ pub fn instantiate(
         deps.storage,
         &Config {
             usk_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
-            stable_ado_addr: Addr::unchecked(""),
+            xastro_token_addr: Addr::unchecked(""),
         },
     )?;
 
@@ -108,14 +108,14 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         } => {
             let mut config = CONFIG.load(deps.storage)?;
 
-            if config.stable_ado_addr != Addr::unchecked("") {
+            if config.xastro_token_addr != Addr::unchecked("") {
                 return Err(ContractError::Unauthorized {});
             }
 
             let init_response = parse_instantiate_response_data(data.as_slice())
                 .map_err(|e| StdError::generic_err(format!("{e}")))?;
 
-            config.stable_ado_addr = deps.api.addr_validate(&init_response.contract_address)?;
+            config.xastro_token_addr = deps.api.addr_validate(&init_response.contract_address)?;
 
             CONFIG.save(deps.storage, &config)?;
 
@@ -144,7 +144,7 @@ fn receive_cw20(
         &config.usk_token_addr,
         env.contract.address.clone(),
     )?;
-    let total_shares = query_supply(&deps.querier, &config.stable_ado_addr)?;
+    let total_shares = query_supply(&deps.querier, &config.xastro_token_addr)?;
 
     match from_binary(&cw20_msg.msg)? {
         Cw20HookMsg::Enter {} => {
@@ -173,7 +173,7 @@ fn receive_cw20(
                 }
 
                 messages.push(wasm_execute(
-                    config.stable_ado_addr.clone(),
+                    config.xastro_token_addr.clone(),
                     &Cw20ExecuteMsg::Mint {
                         recipient: env.contract.address.to_string(),
                         amount: MINIMUM_STAKE_AMOUNT,
@@ -195,7 +195,7 @@ fn receive_cw20(
             };
 
                         messages.push(wasm_execute(
-                config.stable_ado_addr.clone(),
+                config.xastro_token_addr.clone(),
                 &Cw20ExecuteMsg::Mint {
                     recipient: recipient.clone(),
                     amount: mint_amount,
@@ -211,7 +211,7 @@ fn receive_cw20(
             ]))
         }
         Cw20HookMsg::Leave {} => {
-            if info.sender != config.stable_ado_addr {
+            if info.sender != config.xastro_token_addr {
                 return Err(ContractError::Unauthorized {});
             }
 
@@ -222,7 +222,7 @@ fn receive_cw20(
             // Burn share
             let res = Response::new()
                 .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-                    contract_addr: config.stable_ado_addr.to_string(),
+                    contract_addr: config.xastro_token_addr.to_string(),
                     msg: to_binary(&Cw20ExecuteMsg::Burn { amount })?,
                     funds: vec![],
                 }))
@@ -259,10 +259,10 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => Ok(to_binary(&ConfigResponse {
             deposit_token_addr: config.usk_token_addr,
-            share_token_addr: config.stable_ado_addr,
+            share_token_addr: config.xastro_token_addr,
         })?),
         QueryMsg::TotalShares {} => {
-            to_binary(&query_supply(&deps.querier, &config.stable_ado_addr)?)
+            to_binary(&query_supply(&deps.querier, &config.xastro_token_addr)?)
         }
         QueryMsg::TotalDeposit {} => to_binary(&query_token_balance(
             &deps.querier,
@@ -285,7 +285,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
-        "stable_ado" => match contract_version.version.as_ref() {
+        "xastro_token" => match contract_version.version.as_ref() {
             "1.1.1" | "1.1.2" | "1.1.3" => {}
             _ => return Err(ContractError::MigrationError {}),
         },

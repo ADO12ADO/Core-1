@@ -32,7 +32,7 @@ Tokenomics related smart contracts are hosted on ../contracts/tokenomics.
 | [`maker`](contracts/tokenomics/maker)                                           | Fee collector and swapper                        |
 | [`staking`](contracts/tokenomics/staking)                                       | xASTRO staking contract                          |
 | [`vesting`](contracts/tokenomics/vesting)                                       | ASTRO distributor for generator rewards          |
-| [`stable_ado`](contracts/tokenomics/stable_ado)                             | xASTRO token contract                            |
+| [`xastro_token`](contracts/tokenomics/xastro_token)                             | xASTRO token contract                            |
 
 ## Building Contracts
 

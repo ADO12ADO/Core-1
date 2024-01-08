@@ -156,7 +156,7 @@ where
             .unwrap();
     }
 
-    pub fn stable_ado(&self) -> MockToken<B, A, S, C, X, D, I, G> {
+    pub fn xastro_token(&self) -> MockToken<B, A, S, C, X, D, I, G> {
         let config: ConfigResponse = self
             .app
             .borrow()
@@ -171,12 +171,12 @@ where
     }
 
     pub fn leave(&self, sender: &Addr, amount: Uint128) {
-        let stable_ado = self.stable_ado();
+        let xastro_token = self.xastro_token();
         self.app
             .borrow_mut()
             .execute_contract(
                 sender.clone(),
-                stable_ado.address,
+                xastro_token.address,
                 &ExecuteMsg::Send {
                     amount,
                     msg: to_binary(&Cw20HookMsg::Leave {}).unwrap(),

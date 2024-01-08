@@ -24,7 +24,7 @@ where
     C::ExecT: Clone + Debug + PartialEq + JsonSchema + DeserializeOwned + 'static,
     C::QueryT: CustomQuery + DeserializeOwned + 'static,
 {
-    use astroport_stable_ado as cnt;
+    use astroport_xastro_token as cnt;
     let contract = Box::new(ContractWrapper::new_with_empty(
         cnt::contract::execute,
         cnt::contract::instantiate,

@@ -64,9 +64,9 @@ fn store_astro_code(app: &mut App) -> u64 {
 
 fn store_xastro_code(app: &mut App) -> u64 {
     let xastro_contract = Box::new(ContractWrapper::new_with_empty(
-        astroport_stable_ado::contract::execute,
-        astroport_stable_ado::contract::instantiate,
-        astroport_stable_ado::contract::query,
+        astroport_xastro_token::contract::execute,
+        astroport_xastro_token::contract::instantiate,
+        astroport_xastro_token::contract::query,
     ));
 
     app.store_code(xastro_contract)

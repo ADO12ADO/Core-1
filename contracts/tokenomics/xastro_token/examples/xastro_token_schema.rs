@@ -1,6 +1,6 @@
 use cosmwasm_schema::write_api;
 
-use astroport::stable_ado::{InstantiateMsg, QueryMsg};
+use astroport::xastro_token::{InstantiateMsg, QueryMsg};
 use cw20_base::msg::ExecuteMsg;
 
 fn main() {

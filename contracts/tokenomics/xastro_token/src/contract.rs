@@ -12,7 +12,7 @@ use cw20_base::allowances::{
 
 use crate::state::{capture_total_supply_history, check_minter, get_total_supply_at, BALANCES};
 use astroport::asset::addr_opt_validate;
-use astroport::stable_ado::{InstantiateMsg, MigrateMsg, QueryMsg};
+use astroport::xastro_token::{InstantiateMsg, MigrateMsg, QueryMsg};
 use cw2::{get_contract_version, set_contract_version};
 use cw20_base::contract::{
     execute_update_marketing, execute_upload_logo, query_download_logo, query_marketing_info,
@@ -681,7 +681,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
-        "stable_ado" => match contract_version.version.as_ref() {
+        "xastro_token" => match contract_version.version.as_ref() {
             "1.1.1" | "1.1.2" | "1.1.3" => {}
             _ => {
                 return Err(StdError::generic_err(
@@ -711,7 +711,7 @@ mod tests {
     use cosmwasm_std::{Addr, StdError};
 
     use super::*;
-    use astroport::stable_ado::InstantiateMarketingInfo;
+    use astroport::xastro_token::InstantiateMarketingInfo;
 
     mod marketing {
         use cw20::DownloadLogoResponse;

@@ -26,7 +26,7 @@ pub mod staking;
 pub mod token;
 pub mod vesting;
 pub mod xastro_outpost_token;
-pub mod stable_ado;
+pub mod xastro_token;
 
 #[cfg(test)]
 mod mock_querier;

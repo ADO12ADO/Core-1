@@ -99,7 +99,7 @@ async function uploadAndInitStaking(terra: LCDClient, wallet: any) {
 
     if (!network.xastroTokenCodeID) {
         console.log('Register ADO token contract...')
-        network.xastroTokenCodeID = await uploadContract(terra, wallet, join(ARTIFACTS_PATH, 'astroport_stable_ado.wasm')!)
+        network.xastroTokenCodeID = await uploadContract(terra, wallet, join(ARTIFACTS_PATH, 'astroport_xastro_token.wasm')!)
         writeArtifact(network, terra.config.chainID)
     }
 
