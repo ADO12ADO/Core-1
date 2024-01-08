@@ -196,7 +196,7 @@ pub fn migrate(mut deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Respons
 
     match contract_version.contract.as_ref() {
         "astroport-oracle" => match contract_version.version.as_ref() {
-            "1.0.0" | "1.0.1" | "1.0.2" => {
+            "1.1.1" | "1.0.1" | "1.0.2" => {
                 let config = CONFIG.load(deps.storage)?;
                 let price_last_v100 = PRICE_LAST_V100.load(deps.storage)?;
 

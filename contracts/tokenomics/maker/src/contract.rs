@@ -892,7 +892,7 @@ pub fn migrate(mut deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response
 
     match contract_version.contract.as_ref() {
         "astroport-maker" => match contract_version.version.as_ref() {
-            "1.0.0" | "1.0.1" | "1.1.0" => {
+            "1.1.1" | "1.0.1" | "1.1.0" => {
                 migrate_from_v1(deps.branch(), &msg)?;
             }
             "1.2.0" => migrate_from_v120(deps.branch(), msg)?,
