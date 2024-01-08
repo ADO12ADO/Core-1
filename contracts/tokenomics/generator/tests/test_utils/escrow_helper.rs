@@ -15,7 +15,7 @@ pub struct EscrowHelper {
     pub owner: Addr,
     pub astro_token: Addr,
     pub staking_instance: Addr,
-    pub xastro_token: Addr,
+    pub stable_ado: Addr,
     pub escrow_instance: Addr,
     pub astro_token_code_id: u64,
 }
@@ -117,7 +117,7 @@ impl EscrowHelper {
 
         Self {
             owner,
-            xastro_token: res.share_token_addr,
+            stable_ado: res.share_token_addr,
             astro_token,
             staking_instance,
             escrow_instance: voting_instance,
@@ -157,7 +157,7 @@ impl EscrowHelper {
         let res: BalanceResponse = router
             .wrap()
             .query_wasm_smart(
-                self.xastro_token.clone(),
+                self.stable_ado.clone(),
                 &Cw20QueryMsg::Balance {
                     address: user.to_string(),
                 },
@@ -181,7 +181,7 @@ impl EscrowHelper {
         };
         router.execute_contract(
             Addr::unchecked(user),
-            self.xastro_token.clone(),
+            self.stable_ado.clone(),
             &cw20msg,
             &[],
         )
@@ -201,7 +201,7 @@ impl EscrowHelper {
         };
         router.execute_contract(
             Addr::unchecked(user),
-            self.xastro_token.clone(),
+            self.stable_ado.clone(),
             &cw20msg,
             &[],
         )
@@ -225,7 +225,7 @@ impl EscrowHelper {
         };
         router.execute_contract(
             Addr::unchecked(from),
-            self.xastro_token.clone(),
+            self.stable_ado.clone(),
             &cw20msg,
             &[],
         )

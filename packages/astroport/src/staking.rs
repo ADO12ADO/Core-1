@@ -1,4 +1,4 @@
-use crate::xastro_token::InstantiateMarketingInfo;
+use crate::stable_ado::InstantiateMarketingInfo;
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Addr, Uint128};
 use cw20::Cw20ReceiveMsg;
