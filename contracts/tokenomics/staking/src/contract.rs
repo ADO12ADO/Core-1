@@ -286,7 +286,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 
     match contract_version.contract.as_ref() {
         "Vault-ADO-Token" => match contract_version.version.as_ref() {
-            "1.1.2" | "1.1.2" | "1.1.3" => {}
+            "1.1.1" | "1.1.2" | "1.1.3" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),
