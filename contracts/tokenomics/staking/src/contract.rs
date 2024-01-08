@@ -17,7 +17,7 @@ use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
 /// Contract name that is used for migration.
-const CONTRACT_NAME: &str = "Vault-ADO-Token";
+const CONTRACT_NAME: &str = "Vault-Stable";
 /// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -285,7 +285,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
-        "Vault-ADO-Token" => match contract_version.version.as_ref() {
+        "Vault-Stable" => match contract_version.version.as_ref() {
             "1.1.1" | "1.1.2" | "1.1.3" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
