@@ -168,7 +168,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
 
     match contract_version.contract.as_ref() {
         "ADO-Token" => match contract_version.version.as_ref() {
-            "1.1.1" | "1.1.0" => {}
+            "1.1.1" | "1.1.2" => {}
             _ => {
                 return Err(StdError::generic_err(
                     "Cannot migrate. Unsupported contract version",
