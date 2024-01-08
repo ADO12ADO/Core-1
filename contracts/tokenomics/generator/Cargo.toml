@@ -30,7 +30,7 @@ cw2 = "0.15"
 cw20 = "0.15"
 astroport = { path = "../../../packages/astroport", version = "3" }
 cosmwasm-schema = "1.1"
-cw-utils = "1.0.1"
+cw-utils = "1.1.2"
 
 [dev-dependencies]
 generator-controller = { git = "https://github.com/astroport-fi/astroport-governance" }
