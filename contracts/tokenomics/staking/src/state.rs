@@ -10,7 +10,9 @@ pub struct Config {
     /// The ADO token contract address
     pub xastro_token_addr: Addr,
     /// The owner of the staking contract
-    pub owner: Addr, // Add this line for the 'owner' field
+    pub owner: Addr,
+    /// The deposit token contract address
+    pub deposit_token_addr: Addr, // Add this line for the 'deposit_token_addr' field
 }
 
 /// Stores the contract config at the given key
