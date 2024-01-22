@@ -85,6 +85,19 @@ pub fn instantiate(
 /// ## Variants
 /// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
 /// it depending on the received template.
+/// This structure describes the execute messages available in the contract.
+#[cw_serde]
+pub enum ExecuteMsg {
+    // ... other variants ...
+    /// Receive receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
+    Receive(Cw20ReceiveMsg),
+    /// Update deposit token address
+    UpdateDepositTokenAddr { new_deposit_token_addr: String },
+}
+
+// ... (code omitted for brevity) ...
+
+/// Exposes execute functions available in the contract.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -118,6 +131,7 @@ pub fn execute(
     }
 }
 
+// ... (code omitted for brevity) ...
             /// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
