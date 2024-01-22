@@ -1,3 +1,4 @@
+// Import the necessary modules and traits
 use cosmwasm_std::{
     attr, entry_point, from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps,
     DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
@@ -15,7 +16,13 @@ use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 
 use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
+// Import the cw_serde attribute macro from the cosmwasm_schema crate
+use cosmwasm_schema::cw_serde;
+// Import the necessary types or values, replace the placeholders with actual types/values
+use crate::path_to_module::InstantiateMarketingInfo;
+use astroport::factory::Config;
 
+// Rest of the code remains unchanged...
 /// Contract name that is used for migration.
 const CONTRACT_NAME: &str = "ito-staking";
 /// Contract version that is used for migration.
@@ -31,26 +38,27 @@ const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
 /// Minimum initial xastro share
 pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
 
-/// Creates a new contract with the specified parameters in the [`InstantiateMsg`].
-#[cfg_attr(not(feature = "library"), entry_point)]
+/#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
+    // Add this line at the beginning of the instantiate function
+    let info = info.clone();
+
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     // Store config
-   CONFIG.save(
-    deps.storage,
-    &Config {
-        deposit_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
-        xastro_token_addr: Addr::unchecked(""),
-        owner: info.sender.clone(), // Update with the appropriate owner value
-        
-    },
-)?;
+    CONFIG.save(
+        deps.storage,
+        &Config {
+            deposit_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
+            xastro_token_addr: Addr::unchecked(""),
+            owner: info.sender.clone(), // Update with the appropriate owner value
+        },
+    )?;
 
     // Create the ITO token
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
@@ -79,7 +87,7 @@ pub fn instantiate(
 
     Ok(Response::new().add_submessages(sub_msg))
 }
-
+    
 /// Exposes execute functions available in the contract.
 ///
 /// ## Variants
