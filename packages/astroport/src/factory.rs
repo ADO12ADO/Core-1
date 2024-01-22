@@ -22,6 +22,7 @@ pub struct Config {
     pub whitelist_code_id: u64,
     /// The address of the contract that contains the coins with their precision
     pub coin_registry_address: Addr,
+    pub deposit_token_addr: Addr,
 }
 
 /// This enum describes available pair types.
