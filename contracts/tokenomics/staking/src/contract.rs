@@ -87,8 +87,6 @@ pub fn instantiate(
 /// it depending on the received template.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-    d#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -112,35 +110,6 @@ pub fn execute(
             Ok(Response::new())
         }
         // ... other variants
-    }
-}
-/// The entry point to the contract for processing replies from submessages.
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
-    match msg {
-        Reply {
-            id: INSTANTIATE_TOKEN_REPLY_ID,
-            result:
-                SubMsgResult::Ok(SubMsgResponse {
-                    data: Some(data), ..
-                }),
-        } => {
-            let mut config = CONFIG.load(deps.storage)?;
-
-            if config.xastro_token_addr != Addr::unchecked("") {
-                return Err(ContractError::Unauthorized {});
-            }
-
-            let init_response = parse_instantiate_response_data(data.as_slice())
-                .map_err(|e| StdError::generic_err(format!("{e}")))?;
-
-            config.xastro_token_addr = deps.api.addr_validate(&init_response.contract_address)?;
-
-            CONFIG.save(deps.storage, &config)?;
-
-            Ok(Response::new())
-        }
-        _ => Err(ContractError::FailedToParseReply {}),
     }
 }
 
