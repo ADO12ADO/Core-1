@@ -52,6 +52,10 @@ pub fn instantiate(
     },
 )?;
 
+// ...
+
+if config.xastro_token_addr != Addr::unchecked() {
+
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
             admin: Some(msg.owner),
