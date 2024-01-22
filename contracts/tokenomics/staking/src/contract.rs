@@ -44,14 +44,14 @@ pub fn instantiate(
 
     // Store config
     CONFIG.save(
-        deps.storage,
-        &Config {
-            astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
-            xastro_token_addr: Addr::unchecked(""),
-            owner: msg.owner,
-            deposit_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?, // Add this line
-        },
-    )?;
+    deps.storage,
+    &Config {
+        astro_token_addr: deps.api.addr_validate(&msg.astro_token_addr)?,
+        xastro_token_addr: Addr::unchecked(),
+        owner: deps.api.addr_validate(&msg.owner)?,
+        deposit_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
+    },
+)?;
 
     // Create the ITO token
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
