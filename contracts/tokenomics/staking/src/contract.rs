@@ -42,7 +42,7 @@ pub fn instantiate(
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     // Store config
-    CONFIG.save(
+   CONFIG.save(
     deps.storage,
     &Config {
         astro_token_addr: deps.api.addr_validate(&msg.astro_token_addr)?,
