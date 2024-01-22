@@ -17,15 +17,15 @@ use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
 /// Contract name that is used for migration.
-const CONTRACT_NAME: &str = "vault_ado";
+const CONTRACT_NAME: &str = "ito-staking";
 /// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// ADO information.
-const TOKEN_NAME: &str = "ADO";
-const TOKEN_SYMBOL: &str = "ADO";
+const TOKEN_NAME: &str = "Staked Ito";
+const TOKEN_SYMBOL: &str = "ITO";
 
-/// A `reply` call code ID used for sub-messages.
+/// `reply` call code ID used for sub-messages.
 const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
 
 /// Minimum initial xastro share
@@ -50,7 +50,7 @@ pub fn instantiate(
         },
     )?;
 
-    // Create the ADO token
+    // Create the ITO token
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
             admin: Some(msg.owner),
@@ -67,7 +67,7 @@ pub fn instantiate(
                 marketing: msg.marketing,
             })?,
             funds: vec![],
-            label: String::from("Vault ADO"),
+            label: String::from("Staked Ito Token"),
         }
         .into(),
         id: INSTANTIATE_TOKEN_REPLY_ID,
@@ -91,11 +91,31 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
+        // ...
+
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
+        ExecuteMsg::UpdateDepositTokenAddr { new_deposit_token_addr } => {
+            // Ensure the sender is the admin
+            let config: Config = CONFIG.load(deps.storage)?;
+            if info.sender != config.owner {
+                return Err(ContractError::Unauthorized {});
+            }
+
+            // Update the deposit_token_addr
+            CONFIG.update(deps.storage, |mut config| {
+                config.deposit_token_addr = deps.api.addr_validate(&new_deposit_token_addr)?;
+                Ok(config)
+            })?;
+
+            Ok(Response::new())
+        }
+        // Add other ExecuteMsg variants as needed
     }
 }
 
-/// The entry point to the contract for processing replies from submessages.
+
+
+            /// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match msg {
@@ -194,7 +214,7 @@ fn receive_cw20(
                 amount
             };
 
-                        messages.push(wasm_execute(
+            messages.push(wasm_execute(
                 config.xastro_token_addr.clone(),
                 &Cw20ExecuteMsg::Mint {
                     recipient: recipient.clone(),
@@ -245,14 +265,18 @@ fn receive_cw20(
     }
 }
 
-/// Exposes all the queries available in the contract.
+
+
+
+
+    /// Exposes all the queries available in the contract.
 ///
 /// ## Queries
 /// * **QueryMsg::Config {}** Returns the staking contract configuration using a [`ConfigResponse`] object.
 ///
 /// * **QueryMsg::TotalShares {}** Returns the total ADO supply using a [`Uint128`] object.
 ///
-/// * **QueryMsg::Config {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
+/// * **QueryMsg::TotalDeposit {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let config = CONFIG.load(deps.storage)?;
@@ -285,8 +309,8 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
-        "xastro_token" => match contract_version.version.as_ref() {
-            "1.1.1" | "1.1.2" | "1.1.3" => {}
+        "ito-staking" => match contract_version.version.as_ref() {
+            "1.1.0" | "1.1.1" | "1.1.2" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),
@@ -300,3 +324,4 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
 }
+        
