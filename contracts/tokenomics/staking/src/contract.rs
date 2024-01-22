@@ -45,7 +45,7 @@ pub fn instantiate(
     CONFIG.save(
         deps.storage,
         &Config {
-            usk_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
+            astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
             xastro_token_addr: Addr::unchecked(""),
         },
     )?;
@@ -161,7 +161,7 @@ fn receive_cw20(
 
     let mut total_deposit = query_token_balance(
         &deps.querier,
-        &config.usk_token_addr,
+        &config.astro_token_addr,
         env.contract.address.clone(),
     )?;
     let total_shares = query_supply(&deps.querier, &config.xastro_token_addr)?;
@@ -175,7 +175,7 @@ fn receive_cw20(
             }
 
             let mut messages = vec![];
-            if info.sender != config.usk_token_addr {
+            if info.sender != config.astro_token_addr {
                 return Err(ContractError::Unauthorized {});
             }
 
@@ -247,7 +247,7 @@ fn receive_cw20(
                     funds: vec![],
                 }))
                 .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
-                    contract_addr: config.usk_token_addr.to_string(),
+                    contract_addr: config.astro_token_addr.to_string(),
                     msg: to_binary(&Cw20ExecuteMsg::Transfer {
                         recipient: recipient.clone(),
                         amount: what,
@@ -282,7 +282,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let config = CONFIG.load(deps.storage)?;
     match msg {
         QueryMsg::Config {} => Ok(to_binary(&ConfigResponse {
-            deposit_token_addr: config.usk_token_addr,
+            deposit_token_addr: config.astro_token_addr,
             share_token_addr: config.xastro_token_addr,
         })?),
         QueryMsg::TotalShares {} => {
@@ -290,7 +290,7 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         }
         QueryMsg::TotalDeposit {} => to_binary(&query_token_balance(
             &deps.querier,
-            &config.usk_token_addr,
+            &config.astro_token_addr,
             env.contract.address,
         )?),
     }
