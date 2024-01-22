@@ -1,4 +1,4 @@
-// Tambahkan import yang hilang
+use crate::contract::Config;
 use astroport::token::InstantiateMarketingInfo;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
