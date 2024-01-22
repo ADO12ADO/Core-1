@@ -41,8 +41,7 @@ pub fn migrate_configs(deps: &mut DepsMut, msg: &MigrationMsg) -> StdResult<()> 
     fee_address: old_cfg.fee_address,
     whitelist_code_id: old_cfg.whitelist_code_id,
     coin_registry_address: deps.api.addr_validate(msg.coin_registry_address.as_str())?,
-    deposit_token_addr: deps.api.addr_validate(msg.deposit_token_addr.as_str())?, // Tambahkan baris ini
-};
+    };
 
     CONFIG.save(deps.storage, &new_config)
 }
