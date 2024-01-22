@@ -1,3 +1,5 @@
+// Tambahkan import yang hilang
+use astroport::token::InstantiateMarketingInfo;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
 use cw_storage_plus::Item;
