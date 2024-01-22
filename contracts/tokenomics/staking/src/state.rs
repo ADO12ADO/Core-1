@@ -9,8 +9,9 @@ pub struct Config {
     pub astro_token_addr: Addr,
     /// The ADO token contract address
     pub xastro_token_addr: Addr,
+    /// The owner of the staking contract
+    pub owner: Addr, // Add this line for the 'owner' field
 }
-
 
 /// Stores the contract config at the given key
 pub const CONFIG: Item<Config> = Item::new("config");
