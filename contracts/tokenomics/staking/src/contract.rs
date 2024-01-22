@@ -20,7 +20,6 @@ use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 use cosmwasm_schema::cw_serde;
 // Import the necessary types or values, replace the placeholders with actual types/values
 use crate::path_to_module::InstantiateMarketingInfo;
-use astroport::factory::Config;
 // Tambahkan import yang hilang di contract.rs
 use crate::state::InstantiateMarketingInfo;
 use crate::state::Config as InstantiateConfig;
