@@ -17,13 +17,13 @@ use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
 /// Contract name that is used for migration.
-const CONTRACT_NAME: &str = "vault_ado";
+const CONTRACT_NAME: &str = "ito-staking";
 /// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// ADO information.
-const TOKEN_NAME: &str = "ADO";
-const TOKEN_SYMBOL: &str = "ADO";
+const TOKEN_NAME: &str = "Staked Ito";
+const TOKEN_SYMBOL: &str = "ITO";
 
 /// `reply` call code ID used for sub-messages.
 const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
@@ -50,7 +50,7 @@ pub fn instantiate(
         },
     )?;
 
-    // Create the ADO token
+    // Create the ITO token
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
             admin: Some(msg.owner),
@@ -67,7 +67,7 @@ pub fn instantiate(
                 marketing: msg.marketing,
             })?,
             funds: vec![],
-            label: String::from("Vault ADO"),
+            label: String::from("Staked Ito Token"),
         }
         .into(),
         id: INSTANTIATE_TOKEN_REPLY_ID,
@@ -309,8 +309,8 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
-        "xastro_token" => match contract_version.version.as_ref() {
-            "1.1.1" | "1.1.2" | "1.1.3" => {}
+        "ito-staking" => match contract_version.version.as_ref() {
+            "1.1.0" | "1.1.1" | "1.1.2" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),
