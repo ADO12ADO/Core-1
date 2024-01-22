@@ -1,3 +1,4 @@
+use crate::contract::MINIMUM_STAKE_AMOUNT;
 use cosmwasm_std::{DivideByZeroError, OverflowError, StdError};
 use thiserror::Error;
 

@@ -1,22 +1,16 @@
-use crate::contract::Config;
-use astroport::token::InstantiateMarketingInfo;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
 use cw_storage_plus::Item;
 
-/// This structure describes the parameters used for creating a contract.
+/// This structure stores the main parameters for the staking contract.
 #[cw_serde]
-pub struct InstantiateMsg {
-    /// The contract owner address
-    pub owner: String,
-    /// CW20 token code identifier
-    pub token_code_id: u64,
+pub struct Config {
     /// The ASTRO token contract address
-    pub deposit_token_addr: String,
-    /// The ADO token contract address
-    pub astro_token_addr: String, // <-- Tambahkan ini
-    /// the marketing info of type [`InstantiateMarketingInfo`]
-    pub marketing: Option<InstantiateMarketingInfo>,
+    pub astro_token_addr: Addr,
+    /// The ITO token contract address
+    pub xastro_token_addr: Addr,
 }
+
+
 /// Stores the contract config at the given key
 pub const CONFIG: Item<Config> = Item::new("config");

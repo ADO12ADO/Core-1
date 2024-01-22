@@ -1,4 +1,3 @@
-// Import the necessary modules and traits
 use cosmwasm_std::{
     attr, entry_point, from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps,
     DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
@@ -16,49 +15,38 @@ use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 
 use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
-// Import the cw_serde attribute macro from the cosmwasm_schema crate
-use cosmwasm_schema::cw_serde;
-// Import the necessary types or values, replace the placeholders with actual types/values
-use crate::path_to_module::InstantiateMarketingInfo;
-// Tambahkan import yang hilang di contract.rs
-use crate::state::InstantiateMarketingInfo;
-use crate::state::Config as InstantiateConfig;
 
-// Rest of the code remains unchanged...
 /// Contract name that is used for migration.
 const CONTRACT_NAME: &str = "ito-staking";
 /// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// ADO information.
+/// ITO information.
 const TOKEN_NAME: &str = "Staked Ito";
 const TOKEN_SYMBOL: &str = "ITO";
 
-/// `reply` call code ID used for sub-messages.
+/// A `reply` call code ID used for sub-messages.
 const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
 
 /// Minimum initial xastro share
 pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
 
+/// Creates a new contract with the specified parameters in the [`InstantiateMsg`].
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
-    info: MessageInfo,
+    _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
-    // Add this line at the beginning of the instantiate function
-    let info = info.clone();
-
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     // Store config
     CONFIG.save(
         deps.storage,
         &Config {
-            deposit_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
+            astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
             xastro_token_addr: Addr::unchecked(""),
-            owner: info.sender.clone(), // Update with the appropriate owner value
         },
     )?;
 
@@ -89,18 +77,12 @@ pub fn instantiate(
 
     Ok(Response::new().add_submessages(sub_msg))
 }
-    
+
 /// Exposes execute functions available in the contract.
 ///
 /// ## Variants
 /// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
 /// it depending on the received template.
-/// This structure describes the execute messages available in the contract.
-
-
-// ... (code omitted for brevity) ...
-
-/// Exposes execute functions available in the contract.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -109,33 +91,11 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        // ... existing execute variants ...
-
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
-        ExecuteMsg::UpdateDepositTokenAddr { new_deposit_token_addr } => {
-    // Ensure the sender is the admin
-    let mut config: Config = CONFIG.load(deps.storage)?;
-    if info.sender != config.owner {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    // Update the deposit_token_addr
-    config.deposit_token_addr = deps.api.addr_validate(&new_deposit_token_addr)?;
-    CONFIG.save(deps.storage, &config)?;
-
-    Ok(Response::new())
-        }
-        // Add other ExecuteMsg variants as needed
-        // ExecuteMsg::OtherVariant { .. } => {
-        //     // Handle other variant
-        //     Ok(Response::new())
-        // }
-        // ... other ExecuteMsg variants as needed
     }
 }
 
-// ... (code omitted for brevity) ...
-            /// The entry point to the contract for processing replies from submessages.
+/// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match msg {
@@ -190,7 +150,7 @@ fn receive_cw20(
         Cw20HookMsg::Enter {} => {
             // Check if the deposit exceeds the overall limit
             let new_total_deposit = total_deposit + amount;
-            if new_total_deposit > Uint128::new(21_000_000_000) {
+            if new_total_deposit > Uint128::new(21_000_000_000_000) {
                 return Err(ContractError::ExceedsOverallDepositLimit {});
             }
 
@@ -234,7 +194,7 @@ fn receive_cw20(
                 amount
             };
 
-            messages.push(wasm_execute(
+                        messages.push(wasm_execute(
                 config.xastro_token_addr.clone(),
                 &Cw20ExecuteMsg::Mint {
                     recipient: recipient.clone(),
@@ -285,18 +245,14 @@ fn receive_cw20(
     }
 }
 
-
-
-
-
-    /// Exposes all the queries available in the contract.
+/// Exposes all the queries available in the contract.
 ///
 /// ## Queries
 /// * **QueryMsg::Config {}** Returns the staking contract configuration using a [`ConfigResponse`] object.
 ///
-/// * **QueryMsg::TotalShares {}** Returns the total ADO supply using a [`Uint128`] object.
+/// * **QueryMsg::TotalShares {}** Returns the total ITO supply using a [`Uint128`] object.
 ///
-/// * **QueryMsg::TotalDeposit {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
+/// * **QueryMsg::Config {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let config = CONFIG.load(deps.storage)?;
@@ -330,7 +286,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 
     match contract_version.contract.as_ref() {
         "ito-staking" => match contract_version.version.as_ref() {
-            "1.1.0" | "1.1.1" | "1.1.2" => {}
+            "1.1.0" | "1.0.1" | "1.0.2" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),
@@ -344,4 +300,3 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
 }
-        
