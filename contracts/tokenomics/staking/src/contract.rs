@@ -87,34 +87,33 @@ pub fn instantiate(
 /// it depending on the received template.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
+    d#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        // ...
+        // ... other variants
 
-        ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
         ExecuteMsg::UpdateDepositTokenAddr { new_deposit_token_addr } => {
             // Ensure the sender is the admin
-            let config: Config = CONFIG.load(deps.storage)?;
+            let mut config: Config = CONFIG.load(deps.storage)?;
             if info.sender != config.owner {
                 return Err(ContractError::Unauthorized {});
             }
 
             // Update the deposit_token_addr
-            CONFIG.update(deps.storage, |mut config| {
-                config.deposit_token_addr = deps.api.addr_validate(&new_deposit_token_addr)?;
-                Ok(config)
-            })?;
+            config.deposit_token_addr = deps.api.addr_validate(&new_deposit_token_addr)?;
+
+            CONFIG.save(deps.storage, &config)?;
 
             Ok(Response::new())
         }
-        // Add other ExecuteMsg variants as needed
+        // ... other variants
     }
 }
-
 /// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
