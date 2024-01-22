@@ -110,17 +110,17 @@ pub fn execute(
 
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
         ExecuteMsg::UpdateDepositTokenAddr { new_deposit_token_addr } => {
-            // Ensure the sender is the admin
-            let mut config: Config = CONFIG.load(deps.storage)?;
-            if info.sender != config.owner {
-                return Err(ContractError::Unauthorized {});
-            }
+    // Ensure the sender is the admin
+    let mut config: Config = CONFIG.load(deps.storage)?;
+    if info.sender != config.owner {
+        return Err(ContractError::Unauthorized {});
+    }
 
-            // Update the deposit_token_addr
-            config.deposit_token_addr = deps.api.addr_validate(&new_deposit_token_addr)?;
-            CONFIG.save(deps.storage, &config)?;
+    // Update the deposit_token_addr
+    config.deposit_token_addr = deps.api.addr_validate(&new_deposit_token_addr)?;
+    CONFIG.save(deps.storage, &config)?;
 
-            Ok(Response::new())
+    Ok(Response::new())
         }
         // Add other ExecuteMsg variants as needed
         // ExecuteMsg::OtherVariant { .. } => {
