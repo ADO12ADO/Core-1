@@ -15,6 +15,7 @@ use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 
 use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
+use astroport::staking::ExecuteMsg;
 
 /// Contract name that is used for migration.
 const CONTRACT_NAME: &str = "ito-staking";
