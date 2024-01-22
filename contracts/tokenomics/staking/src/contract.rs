@@ -33,28 +33,26 @@ pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
 
 /// ... (other constants)
 
+// ... existing imports ...
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
-) -> StdResult<Response> {
+) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
     CONFIG.save(
-    deps.storage,
-    &Config {
-        astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
-        xastro_token_addr: Addr::unchecked(),  // Gunakan Addr::unchecked()
-        owner: deps.api.addr_validate(&msg.owner)?,
-        deposit_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
-    },
-)?;
-
-// ...
-
-if config.xastro_token_addr != Addr::unchecked() {
+        deps.storage,
+        &Config {
+            astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
+            xastro_token_addr: Addr::unchecked(),
+            owner: msg.owner,
+            deposit_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
+        },
+    )?;
 
     let sub_msg: Vec<SubMsg> = vec![SubMsg {
         msg: WasmMsg::Instantiate {
@@ -82,10 +80,8 @@ if config.xastro_token_addr != Addr::unchecked() {
 
     Ok(Response::new().add_submessages(sub_msg))
 }
+// ... existing imports ...
 
-/// ... (other functions)
-
-// ... (query function)
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -94,7 +90,8 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        // ... (other variants)
+        // ... your existing execute variants ...
+
         ExecuteMsg::UpdateDepositTokenAddr { new_deposit_token_addr } => {
             let mut config: Config = CONFIG.load(deps.storage)?;
             if info.sender != config.owner {
@@ -107,10 +104,42 @@ pub fn execute(
 
             Ok(Response::new())
         }
-        // ... (other variants)
+        // ... other ExecuteMsg variants as needed
     }
 }
+// ... existing imports ...
 
+/// Exposes all the queries available in the contract.
+///
+/// ## Queries
+/// * **QueryMsg::Config {}** Returns the staking contract configuration using a [`ConfigResponse`] object.
+///
+/// * **QueryMsg::TotalShares {}** Returns the total ADO supply using a [`Uint128`] object.
+///
+/// * **QueryMsg::TotalDeposit {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    let config = CONFIG.load(deps.storage)?;
+    match msg {
+        QueryMsg::Config {} => Ok(to_binary(&ConfigResponse {
+            deposit_token_addr: config.astro_token_addr,
+            share_token_addr: config.xastro_token_addr,
+        })?),
+        QueryMsg::TotalShares {} => {
+            to_binary(&query_supply(&deps.querier, &config.xastro_token_addr)?)
+        }
+        QueryMsg::TotalDeposit {} => to_binary(&query_token_balance(
+            &deps.querier,
+            &config.astro_token_addr,
+            env.contract.address,
+        )?),
+        // ... handle other query variants ...
+    }
+}
+// ... existing imports ...
+
+/// The entry point to the contract for processing replies from submessages.
+/// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match msg {
@@ -123,7 +152,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         } => {
             let mut config = CONFIG.load(deps.storage)?;
 
-            if config.xastro_token_addr != Addr::unchecked() {
+            if config.xastro_token_addr != Addr::unchecked("") {
                 return Err(ContractError::Unauthorized {});
             }
 
@@ -139,8 +168,6 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         _ => Err(ContractError::FailedToParseReply {}),
     }
 }
-
-// ... (other functions)
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
