@@ -46,7 +46,7 @@ pub fn instantiate(
     deps.storage,
     &Config {
         astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
-        xastro_token_addr: Addr::default(),  // Ganti dengan Addr::default()
+        xastro_token_addr: Addr::unchecked(),  // Gunakan Addr::unchecked()
         owner: deps.api.addr_validate(&msg.owner)?,
         deposit_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
     },
