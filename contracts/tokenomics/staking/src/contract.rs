@@ -47,6 +47,7 @@ pub fn instantiate(
         &Config {
             astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
             xastro_token_addr: Addr::unchecked(""),
+            owner: msg.owner, // Add this line if it's missing
         },
     )?;
 
@@ -113,9 +114,7 @@ pub fn execute(
     }
 }
 
-
-
-            /// The entry point to the contract for processing replies from submessages.
+/// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match msg {
@@ -265,11 +264,7 @@ fn receive_cw20(
     }
 }
 
-
-
-
-
-    /// Exposes all the queries available in the contract.
+/// Exposes all the queries available in the contract.
 ///
 /// ## Queries
 /// * **QueryMsg::Config {}** Returns the staking contract configuration using a [`ConfigResponse`] object.
@@ -323,5 +318,4 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         .add_attribute("previous_contract_version", &contract_version.version)
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
-}
-        
+                                  }
