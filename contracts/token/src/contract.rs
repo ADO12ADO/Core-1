@@ -1,150 +1,88 @@
 use cosmwasm_std::{
-    entry_point, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
+    attr, entry_point, from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps,
+    DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
+    SubMsgResponse, SubMsgResult, Uint128, WasmMsg,
 };
-use cw20::{EmbeddedLogo, Logo, LogoInfo, MarketingInfoResponse};
+use cw_utils::parse_instantiate_response_data;
 
+use crate::error::ContractError;
+use crate::state::{Config, CONFIG};
+use astroport::staking::{
+    ConfigResponse, Cw20HookMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg,
+};
 use cw2::{get_contract_version, set_contract_version};
-use cw20_base::contract::{create_accounts, execute as cw20_execute, query as cw20_query};
-use cw20_base::msg::{ExecuteMsg, QueryMsg};
-use cw20_base::state::{MinterData, TokenInfo, LOGO, MARKETING_INFO, TOKEN_INFO};
-use cw20_base::ContractError;
+use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
 
-use astroport::asset::addr_opt_validate;
-use astroport::token::{InstantiateMsg, MigrateMsg};
+use astroport::querier::{query_supply, query_token_balance};
+use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
 /// Contract name that is used for migration.
-const CONTRACT_NAME: &str = "ADO-Token";
+const CONTRACT_NAME: &str = "vault_ado";
 /// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const LOGO_SIZE_CAP: usize = 5 * 1024;
+/// ADO information.
+const TOKEN_NAME: &str = "ADO";
+const TOKEN_SYMBOL: &str = "ADO";
 
-/// Checks if data starts with XML preamble
-fn verify_xml_preamble(data: &[u8]) -> Result<(), ContractError> {
-    // The easiest way to perform this check would be just match on regex, however regex
-    // compilation is heavy and probably not worth it.
+/// `reply` call code ID used for sub-messages.
+const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
 
-    let preamble = data
-        .split_inclusive(|c| *c == b'>')
-        .next()
-        .ok_or(ContractError::InvalidXmlPreamble {})?;
-
-    const PREFIX: &[u8] = b"<?xml ";
-    const POSTFIX: &[u8] = b"?>";
-
-    if !(preamble.starts_with(PREFIX) && preamble.ends_with(POSTFIX)) {
-        Err(ContractError::InvalidXmlPreamble {})
-    } else {
-        Ok(())
-    }
-
-    // Additionally attributes format could be validated as they are well defined, as well as
-    // comments presence inside of preable, but it is probably not worth it.
-}
-
-/// Validates XML logo
-fn verify_xml_logo(logo: &[u8]) -> Result<(), ContractError> {
-    verify_xml_preamble(logo)?;
-
-    if logo.len() > LOGO_SIZE_CAP {
-        Err(ContractError::LogoTooBig {})
-    } else {
-        Ok(())
-    }
-}
-
-/// Validates png logo
-fn verify_png_logo(logo: &[u8]) -> Result<(), ContractError> {
-    // PNG header format:
-    // 0x89 - magic byte, out of ASCII table to fail on 7-bit systems
-    // "PNG" ascii representation
-    // [0x0d, 0x0a] - dos style line ending
-    // 0x1a - dos control character, stop displaying rest of the file
-    // 0x0a - unix style line ending
-    const HEADER: [u8; 8] = [0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a];
-    if logo.len() > LOGO_SIZE_CAP {
-        Err(ContractError::LogoTooBig {})
-    } else if !logo.starts_with(&HEADER) {
-        Err(ContractError::InvalidPngHeader {})
-    } else {
-        Ok(())
-    }
-}
-
-/// Checks if passed logo is correct, and if not, returns an error
-fn verify_logo(logo: &Logo) -> Result<(), ContractError> {
-    match logo {
-        Logo::Embedded(EmbeddedLogo::Svg(logo)) => verify_xml_logo(logo),
-        Logo::Embedded(EmbeddedLogo::Png(logo)) => verify_png_logo(logo),
-        Logo::Url(_) => Ok(()), // Any reasonable url validation would be regex based, probably not worth it
-    }
-}
+/// Minimum initial xastro share
+pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
 
 /// Creates a new contract with the specified parameters in the [`InstantiateMsg`].
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
-    mut deps: DepsMut,
-    _env: Env,
+    deps: DepsMut,
+    env: Env,
     _info: MessageInfo,
     msg: InstantiateMsg,
-) -> Result<Response, ContractError> {
+) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    // check valid token info
-    msg.validate()?;
-    // create initial accounts
-    let total_supply = create_accounts(&mut deps, &msg.initial_balances)?;
 
-    // Check supply cap
-    if let Some(limit) = msg.get_cap() {
-        if total_supply > limit {
-            return Err(StdError::generic_err("Initial supply greater than cap").into());
+    // Store config
+    CONFIG.save(
+        deps.storage,
+        &Config {
+            usk_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
+            xastro_token_addr: Addr::unchecked(""),
+        },
+    )?;
+
+    // Create the ADO token
+    let sub_msg: Vec<SubMsg> = vec![SubMsg {
+        msg: WasmMsg::Instantiate {
+            admin: Some(msg.owner),
+            code_id: msg.token_code_id,
+            msg: to_binary(&TokenInstantiateMsg {
+                name: TOKEN_NAME.to_string(),
+                symbol: TOKEN_SYMBOL.to_string(),
+                decimals: 6,
+                initial_balances: vec![],
+                mint: Some(MinterResponse {
+                    minter: env.contract.address.to_string(),
+                    cap: None,
+                }),
+                marketing: msg.marketing,
+            })?,
+            funds: vec![],
+            label: String::from("Vault ADO"),
         }
-    }
+        .into(),
+        id: INSTANTIATE_TOKEN_REPLY_ID,
+        gas_limit: None,
+        reply_on: ReplyOn::Success,
+    }];
 
-    let mint = match msg.mint {
-        Some(m) => Some(MinterData {
-            minter: deps.api.addr_validate(&m.minter)?,
-            cap: m.cap,
-        }),
-        None => None,
-    };
-
-    // Store token info
-    let data = TokenInfo {
-        name: msg.name,
-        symbol: msg.symbol,
-        decimals: msg.decimals,
-        total_supply,
-        mint,
-    };
-    TOKEN_INFO.save(deps.storage, &data)?;
-
-    if let Some(marketing) = msg.marketing {
-        let logo = if let Some(logo) = marketing.logo {
-            verify_logo(&logo)?;
-            LOGO.save(deps.storage, &logo)?;
-
-            match logo {
-                Logo::Url(url) => Some(LogoInfo::Url(url)),
-                Logo::Embedded(_) => Some(LogoInfo::Embedded),
-            }
-        } else {
-            None
-        };
-
-        let data = MarketingInfoResponse {
-            project: marketing.project,
-            description: marketing.description,
-            marketing: addr_opt_validate(deps.api, &marketing.marketing)?,
-            logo,
-        };
-        MARKETING_INFO.save(deps.storage, &data)?;
-    }
-
-    Ok(Response::default())
+    Ok(Response::new().add_submessages(sub_msg))
 }
 
 /// Exposes execute functions available in the contract.
+///
+/// ## Variants
+/// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
+/// it depending on the received template.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -152,34 +90,230 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
-    cw20_execute(deps, env, info, msg)
+    match msg {
+        // ...
+
+        ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
+        ExecuteMsg::UpdateDepositTokenAddr { new_deposit_token_addr } => {
+            // Ensure the sender is the admin
+            let config: Config = CONFIG.load(deps.storage)?;
+            if info.sender != config.owner {
+                return Err(ContractError::Unauthorized {});
+            }
+
+            // Update the deposit_token_addr
+            CONFIG.update(deps.storage, |mut config| {
+                config.deposit_token_addr = deps.api.addr_validate(&new_deposit_token_addr)?;
+                Ok(config)
+            })?;
+
+            Ok(Response::new())
+        }
+        // Add other ExecuteMsg variants as needed
+    }
 }
 
-/// Exposes queries available in the contract.
+
+
+            /// The entry point to the contract for processing replies from submessages.
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
+    match msg {
+        Reply {
+            id: INSTANTIATE_TOKEN_REPLY_ID,
+            result:
+                SubMsgResult::Ok(SubMsgResponse {
+                    data: Some(data), ..
+                }),
+        } => {
+            let mut config = CONFIG.load(deps.storage)?;
+
+            if config.xastro_token_addr != Addr::unchecked("") {
+                return Err(ContractError::Unauthorized {});
+            }
+
+            let init_response = parse_instantiate_response_data(data.as_slice())
+                .map_err(|e| StdError::generic_err(format!("{e}")))?;
+
+            config.xastro_token_addr = deps.api.addr_validate(&init_response.contract_address)?;
+
+            CONFIG.save(deps.storage, &config)?;
+
+            Ok(Response::new())
+        }
+        _ => Err(ContractError::FailedToParseReply {}),
+    }
+}
+
+/// Receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
+///
+/// * **cw20_msg** CW20 message to process.
+fn receive_cw20(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    cw20_msg: Cw20ReceiveMsg,
+) -> Result<Response, ContractError> {
+    let config: Config = CONFIG.load(deps.storage)?;
+
+    let recipient = cw20_msg.sender;
+    let mut amount = cw20_msg.amount;
+
+    let mut total_deposit = query_token_balance(
+        &deps.querier,
+        &config.usk_token_addr,
+        env.contract.address.clone(),
+    )?;
+    let total_shares = query_supply(&deps.querier, &config.xastro_token_addr)?;
+
+    match from_binary(&cw20_msg.msg)? {
+        Cw20HookMsg::Enter {} => {
+            // Check if the deposit exceeds the overall limit
+            let new_total_deposit = total_deposit + amount;
+            if new_total_deposit > Uint128::new(21_000_000_000) {
+                return Err(ContractError::ExceedsOverallDepositLimit {});
+            }
+
+            let mut messages = vec![];
+            if info.sender != config.usk_token_addr {
+                return Err(ContractError::Unauthorized {});
+            }
+
+            // In a CW20 `send`, the total balance of the recipient is already increased.
+            // To properly calculate the total amount of ASTRO deposited in staking, we should subtract the user deposit from the pool
+            total_deposit -= amount;
+            let mint_amount: Uint128 = if total_shares.is_zero() || total_deposit.is_zero() {
+                amount = amount
+                    .checked_sub(MINIMUM_STAKE_AMOUNT)
+                    .map_err(|_| ContractError::MinimumStakeAmountError {})?;
+
+                // amount cannot become zero after minimum stake subtraction
+                if amount.is_zero() {
+                    return Err(ContractError::MinimumStakeAmountError {});
+                }
+
+                messages.push(wasm_execute(
+                    config.xastro_token_addr.clone(),
+                    &Cw20ExecuteMsg::Mint {
+                        recipient: env.contract.address.to_string(),
+                        amount: MINIMUM_STAKE_AMOUNT,
+                    },
+                    vec![],
+                )?);
+
+                amount
+            } else {
+                amount = amount
+                    .checked_mul(total_shares)?
+                    .checked_div(total_deposit)?;
+
+                if amount.is_zero() {
+                    return Err(ContractError::StakeAmountTooSmall {});
+                }
+
+                amount
+            };
+
+            messages.push(wasm_execute(
+                config.xastro_token_addr.clone(),
+                &Cw20ExecuteMsg::Mint {
+                    recipient: recipient.clone(),
+                    amount: mint_amount,
+                },
+                vec![],
+            )?);
+
+            Ok(Response::new().add_messages(messages).add_attributes(vec![
+                attr("action", "enter"),
+                attr("recipient", recipient),
+                attr("astro_amount", cw20_msg.amount),
+                attr("xastro_amount", mint_amount),
+            ]))
+        }
+        Cw20HookMsg::Leave {} => {
+            if info.sender != config.xastro_token_addr {
+                return Err(ContractError::Unauthorized {});
+            }
+
+            let what = amount
+                .checked_mul(total_deposit)?
+                .checked_div(total_shares)?;
+
+            // Burn share
+            let res = Response::new()
+                .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: config.xastro_token_addr.to_string(),
+                    msg: to_binary(&Cw20ExecuteMsg::Burn { amount })?,
+                    funds: vec![],
+                }))
+                .add_message(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: config.usk_token_addr.to_string(),
+                    msg: to_binary(&Cw20ExecuteMsg::Transfer {
+                        recipient: recipient.clone(),
+                        amount: what,
+                    })?,
+                    funds: vec![],
+                }));
+
+            Ok(res.add_attributes(vec![
+                attr("action", "leave"),
+                attr("recipient", recipient),
+                attr("xastro_amount", cw20_msg.amount),
+                attr("astro_amount", what),
+            ]))
+        }
+    }
+}
+
+
+
+
+
+    /// Exposes all the queries available in the contract.
+///
+/// ## Queries
+/// * **QueryMsg::Config {}** Returns the staking contract configuration using a [`ConfigResponse`] object.
+///
+/// * **QueryMsg::TotalShares {}** Returns the total ADO supply using a [`Uint128`] object.
+///
+/// * **QueryMsg::TotalDeposit {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    cw20_query(deps, env, msg)
+    let config = CONFIG.load(deps.storage)?;
+    match msg {
+        QueryMsg::Config {} => Ok(to_binary(&ConfigResponse {
+            deposit_token_addr: config.usk_token_addr,
+            share_token_addr: config.xastro_token_addr,
+        })?),
+        QueryMsg::TotalShares {} => {
+            to_binary(&query_supply(&deps.querier, &config.xastro_token_addr)?)
+        }
+        QueryMsg::TotalDeposit {} => to_binary(&query_token_balance(
+            &deps.querier,
+            &config.usk_token_addr,
+            env.contract.address,
+        )?),
+    }
 }
 
-/// Manages contract migration.
+/// ## Description
+/// Used for migration of contract. Returns the default object of type [`Response`].
+/// ## Params
+/// * **_deps** is the object of type [`DepsMut`].
+///
+/// * **_env** is the object of type [`Env`].
+///
+/// * **_msg** is the object of type [`MigrateMsg`].
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
-        "ADO-Token" => match contract_version.version.as_ref() {
-            "1.1.1" | "1.1.2" => {}
-            _ => {
-                return Err(StdError::generic_err(
-                    "Cannot migrate. Unsupported contract version",
-                ))
-            }
+        "xastro_token" => match contract_version.version.as_ref() {
+            "1.1.1" | "1.1.2" | "1.1.3" => {}
+            _ => return Err(ContractError::MigrationError {}),
         },
-        _ => {
-            return Err(StdError::generic_err(
-                "Cannot migrate. Unsupported contract name",
-            ))
-        }
+        _ => return Err(ContractError::MigrationError {}),
     }
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
@@ -190,145 +324,4 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
 }
-
-#[cfg(test)]
-mod tests {
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{Addr, StdError};
-
-    use super::*;
-    use astroport::token::InstantiateMarketingInfo;
-
-    mod marketing {
-        use cw20::DownloadLogoResponse;
-        use cw20_base::contract::{query_download_logo, query_marketing_info};
-
-        use super::*;
-
-        #[test]
-        fn basic() {
-            let mut deps = mock_dependencies();
-            let instantiate_msg = InstantiateMsg {
-                name: "Cash Token".to_string(),
-                symbol: "CASH".to_string(),
-                decimals: 9,
-                initial_balances: vec![],
-                mint: None,
-                marketing: Some(InstantiateMarketingInfo {
-                    project: Some("Project".to_owned()),
-                    description: Some("Description".to_owned()),
-                    marketing: Some("marketing".to_owned()),
-                    logo: Some(Logo::Url("url".to_owned())),
-                }),
-            };
-
-            let info = mock_info("creator", &[]);
-            let env = mock_env();
-            let res = instantiate(deps.as_mut(), env, info, instantiate_msg).unwrap();
-            assert_eq!(0, res.messages.len());
-
-            assert_eq!(
-                query_marketing_info(deps.as_ref()).unwrap(),
-                MarketingInfoResponse {
-                    project: Some("Project".to_owned()),
-                    description: Some("Description".to_owned()),
-                    marketing: Some(Addr::unchecked("marketing")),
-                    logo: Some(LogoInfo::Url("url".to_owned())),
-                }
-            );
-
-            let err = query_download_logo(deps.as_ref()).unwrap_err();
-            assert!(
-                matches!(err, StdError::NotFound { .. }),
-                "Expected StdError::NotFound, received {}",
-                err
-            );
-        }
-
-        #[test]
-        fn svg() {
-            let mut deps = mock_dependencies();
-            let img = "<?xml version=\"1.0\"?><svg></svg>".as_bytes();
-            let instantiate_msg = InstantiateMsg {
-                name: "Cash Token".to_string(),
-                symbol: "CASH".to_string(),
-                decimals: 9,
-                initial_balances: vec![],
-                mint: None,
-                marketing: Some(InstantiateMarketingInfo {
-                    project: Some("Project".to_owned()),
-                    description: Some("Description".to_owned()),
-                    marketing: Some("marketing".to_owned()),
-                    logo: Some(Logo::Embedded(EmbeddedLogo::Svg(img.into()))),
-                }),
-            };
-
-            let info = mock_info("creator", &[]);
-            let env = mock_env();
-            let res = instantiate(deps.as_mut(), env, info, instantiate_msg).unwrap();
-            assert_eq!(0, res.messages.len());
-
-            assert_eq!(
-                query_marketing_info(deps.as_ref()).unwrap(),
-                MarketingInfoResponse {
-                    project: Some("Project".to_owned()),
-                    description: Some("Description".to_owned()),
-                    marketing: Some(Addr::unchecked("marketing")),
-                    logo: Some(LogoInfo::Embedded),
-                }
-            );
-
-            let res: DownloadLogoResponse = query_download_logo(deps.as_ref()).unwrap();
-            assert_eq! {
-                res,
-                DownloadLogoResponse{
-                    data: img.into(),
-                    mime_type: "image/svg+xml".to_owned(),
-                }
-            }
-        }
-
-        #[test]
-        fn png() {
-            let mut deps = mock_dependencies();
-            const PNG_HEADER: [u8; 8] = [0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a];
-            let instantiate_msg = InstantiateMsg {
-                name: "Cash Token".to_string(),
-                symbol: "CASH".to_string(),
-                decimals: 9,
-                initial_balances: vec![],
-                mint: None,
-                marketing: Some(InstantiateMarketingInfo {
-                    project: Some("Project".to_owned()),
-                    description: Some("Description".to_owned()),
-                    marketing: Some("marketing".to_owned()),
-                    logo: Some(Logo::Embedded(EmbeddedLogo::Png(PNG_HEADER.into()))),
-                }),
-            };
-
-            let info = mock_info("creator", &[]);
-            let env = mock_env();
-            let res = instantiate(deps.as_mut(), env, info, instantiate_msg).unwrap();
-            assert_eq!(0, res.messages.len());
-
-            assert_eq!(
-                query_marketing_info(deps.as_ref()).unwrap(),
-                MarketingInfoResponse {
-                    project: Some("Project".to_owned()),
-                    description: Some("Description".to_owned()),
-                    marketing: Some(Addr::unchecked("marketing")),
-                    logo: Some(LogoInfo::Embedded),
-                }
-            );
-
-            let res: DownloadLogoResponse = query_download_logo(deps.as_ref()).unwrap();
-            assert_eq! {
-                res,
-                DownloadLogoResponse{
-                    data: PNG_HEADER.into(),
-                    mime_type: "image/png".to_owned(),
-                }
-            }
-        }
-    }
-}
+        
