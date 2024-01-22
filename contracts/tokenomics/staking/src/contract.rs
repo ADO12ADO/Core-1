@@ -38,7 +38,7 @@ const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
 /// Minimum initial xastro share
 pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
 
-/#[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
