@@ -54,7 +54,7 @@ pub fn instantiate(
     generator_address: None,
     whitelist_code_id: msg.whitelist_code_id,
     coin_registry_address: deps.api.addr_validate(&msg.coin_registry_address)?,
-    deposit_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?, // Tambahkan baris ini
+    // Tambahkan baris ini
 };
 
     config.generator_address = addr_opt_validate(deps.api, &msg.generator_address)?;
