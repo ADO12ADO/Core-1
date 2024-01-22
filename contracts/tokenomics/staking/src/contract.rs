@@ -97,14 +97,7 @@ pub fn instantiate(
 /// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
 /// it depending on the received template.
 /// This structure describes the execute messages available in the contract.
-#[cw_serde]
-pub enum ExecuteMsg {
-    // ... other variants ...
-    /// Receive receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
-    Receive(Cw20ReceiveMsg),
-    /// Update deposit token address
-    UpdateDepositTokenAddr { new_deposit_token_addr: String },
-}
+
 
 // ... (code omitted for brevity) ...
 
