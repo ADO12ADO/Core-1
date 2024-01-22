@@ -21,6 +21,8 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     /// Receive receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
     Receive(Cw20ReceiveMsg),
+    /// Update deposit token address
+    UpdateDepositTokenAddr { new_deposit_token_addr: String },
 }
 
 /// This structure describes the query messages available in the contract.
