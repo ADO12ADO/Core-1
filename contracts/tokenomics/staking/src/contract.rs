@@ -4,7 +4,6 @@ use cosmwasm_std::{
     SubMsgResponse, SubMsgResult, Uint128, WasmMsg,
 };
 use cw_utils::parse_instantiate_response_data;
-
 use crate::error::ContractError;
 use crate::state::{Config, CONFIG};
 use astroport::staking::{
@@ -12,10 +11,10 @@ use astroport::staking::{
 };
 use cw2::{get_contract_version, set_contract_version};
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
-
 use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
-
+// Ensure you import the ExecuteMsg enum from astroport::staking
+use astroport::staking::ExecuteMsg;
 /// Contract name that is used for migration.
 const CONTRACT_NAME: &str = "ito-staking";
 /// Contract version that is used for migration.
