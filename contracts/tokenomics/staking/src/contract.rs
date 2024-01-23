@@ -88,11 +88,7 @@ pub fn instantiate(
 // ... existing imports and other code
 
 // Include the #[derive] attribute and the ExecuteMsg enum here
-#[derive(Clone, PartialEq, MessageInfo, Deserialize, Serialize, Debug)]
-pub enum ExecuteMsg {
-    // ... existing variants
-    UpdateDepositTokenAddr { deposit_token_addr: String },
-}
+
 
 // ... existing code
 
