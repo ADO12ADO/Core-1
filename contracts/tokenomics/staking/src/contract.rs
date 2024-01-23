@@ -102,7 +102,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
-        ExecuteMsg::UpdateDepositTokenAddr { astro_token_addr } => {
+        ExecuteMsg::UpdateAstroTokenAddr { astro_token_addr } => {
             update_astro_token_addr(deps, env, info, astro_token_addr)
         }
     }
