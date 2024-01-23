@@ -83,6 +83,19 @@ pub fn instantiate(
 /// ## Variants
 /// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
 /// it depending on the received template.
+// contract.rs
+
+// ... existing imports and other code
+
+// Include the #[derive] attribute and the ExecuteMsg enum here
+#[derive(Clone, PartialEq, MessageInfo, Deserialize, Serialize, Debug)]
+pub enum ExecuteMsg {
+    // ... existing variants
+    UpdateDepositTokenAddr { deposit_token_addr: String },
+}
+
+// ... existing code
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
