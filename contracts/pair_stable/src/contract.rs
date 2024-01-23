@@ -1060,7 +1060,7 @@ pub fn migrate(mut deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Respons
 
     match contract_version.contract.as_ref() {
         "astroport-pair-stable" => match contract_version.version.as_ref() {
-            "1.1.1-fix1" | "1.1.2" | "1.1.1" => {
+            "1.0.0-fix1" | "1.1.0" | "1.1.1" => {
                 migrate_config_to_v210(deps.branch())?;
             }
             "2.1.1" | "2.1.2" => {

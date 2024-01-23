@@ -29,7 +29,7 @@ impl<'a> Contract<'a> {
     }
 }
 
-/// Implementation of the bonded pair template. Performs ASTRO-ADO swap operations.
+/// Implementation of the bonded pair template. Performs ASTRO-ITO swap operations.
 impl<'a> PairBonded<'a> for Contract<'a> {
     const CONTRACT_NAME: &'a str = "astroport-pair-astro-xastro";
 

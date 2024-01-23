@@ -156,7 +156,7 @@ async function provideLiquidity(network: any, astroport: Astroport, accAddress: 
     let xastro_balance = await astroport.getTokenBalance(network.xastroAddress, accAddress);
 
     console.log(`ASTRO balance: ${astro_balance}`)
-    console.log(`ADO balance: ${xastro_balance}`)
+    console.log(`ITO balance: ${xastro_balance}`)
 }
 
 main().catch(console.log)

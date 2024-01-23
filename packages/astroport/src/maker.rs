@@ -10,13 +10,13 @@ pub struct Config {
     pub owner: Addr,
     /// The factory contract address
     pub factory_contract: Addr,
-    /// The ADO staking contract address.
+    /// The ITO staking contract address.
     pub staking_contract: Option<Addr>,
     /// Default bridge asset (Terra1 - LUNC, Terra2 - LUNA, etc.)
     pub default_bridge: Option<AssetInfo>,
-    /// The vADO fee distributor contract address
+    /// The vITO fee distributor contract address
     pub governance_contract: Option<Addr>,
-    /// The percentage of fees that go to the vADO fee distributor
+    /// The percentage of fees that go to the vITO fee distributor
     pub governance_percent: Uint64,
     /// The ASTRO token asset info
     pub astro_token: AssetInfo,
@@ -47,9 +47,9 @@ pub struct InstantiateMsg {
     pub astro_token: AssetInfo,
     /// The factory contract address
     pub factory_contract: String,
-    /// The ADO staking contract address. If None then governance_contract must be set with 100% fee.
+    /// The ITO staking contract address. If None then governance_contract must be set with 100% fee.
     pub staking_contract: Option<String>,
-    /// The governance contract address (fee distributor for vADO)
+    /// The governance contract address (fee distributor for vITO)
     pub governance_contract: Option<String>,
     /// The percentage of fees that go to governance_contract
     pub governance_percent: Option<Uint64>,
@@ -71,9 +71,9 @@ pub enum ExecuteMsg {
     UpdateConfig {
         /// The factory contract address
         factory_contract: Option<String>,
-        /// The ADO staking contract address
+        /// The ITO staking contract address
         staking_contract: Option<String>,
-        /// The governance contract address (fee distributor for vADO)
+        /// The governance contract address (fee distributor for vITO)
         governance_contract: Option<UpdateAddr>,
         /// The percentage of fees that go to governance_contract
         governance_percent: Option<Uint64>,
@@ -133,15 +133,15 @@ pub struct ConfigResponse {
     pub astro_token: AssetInfo,
     /// The factory contract address
     pub factory_contract: Addr,
-    /// The ADO staking contract address
+    /// The ITO staking contract address
     pub staking_contract: Option<Addr>,
-    /// The governance contract address (fee distributor for vADO stakers)
+    /// The governance contract address (fee distributor for vITO stakers)
     pub governance_contract: Option<Addr>,
     /// The percentage of fees that go to governance_contract
     pub governance_percent: Uint64,
     /// The maximum spread used when swapping fee tokens to ASTRO
     pub max_spread: Decimal,
-    /// The remainder ASTRO tokens (accrued before the Maker is upgraded) to be distributed to ADO stakers
+    /// The remainder ASTRO tokens (accrued before the Maker is upgraded) to be distributed to ITO stakers
     pub remainder_reward: Uint128,
     /// The amount of ASTRO tokens accrued before upgrading the Maker implementation and enabling reward distribution
     pub pre_upgrade_astro_amount: Uint128,

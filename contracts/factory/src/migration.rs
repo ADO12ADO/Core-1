@@ -35,12 +35,12 @@ pub fn migrate_configs(deps: &mut DepsMut, msg: &MigrationMsg) -> StdResult<()> 
     let old_cfg = CONFIG_V120.load(deps.storage)?;
 
     let new_config = Config {
-    owner: old_cfg.owner,
-    token_code_id: old_cfg.token_code_id,
-    generator_address: old_cfg.generator_address,
-    fee_address: old_cfg.fee_address,
-    whitelist_code_id: old_cfg.whitelist_code_id,
-    coin_registry_address: deps.api.addr_validate(msg.coin_registry_address.as_str())?,
+        owner: old_cfg.owner,
+        token_code_id: old_cfg.token_code_id,
+        generator_address: old_cfg.generator_address,
+        fee_address: old_cfg.fee_address,
+        whitelist_code_id: old_cfg.whitelist_code_id,
+        coin_registry_address: deps.api.addr_validate(msg.coin_registry_address.as_str())?,
     };
 
     CONFIG.save(deps.storage, &new_config)

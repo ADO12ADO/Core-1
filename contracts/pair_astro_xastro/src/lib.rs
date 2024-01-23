@@ -59,9 +59,9 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 
     match contract_version.contract.as_ref() {
         Contract::CONTRACT_NAME => match contract_version.version.as_ref() {
-            "1.1.1" => {}
-            "1.1.2" => {}
-            "1.1.3" => {}
+            "1.0.0" => {}
+            "1.0.1" => {}
+            "1.0.2" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),

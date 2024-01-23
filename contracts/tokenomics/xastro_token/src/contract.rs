@@ -25,7 +25,7 @@ use cw20_base::ContractError;
 use cw_storage_plus::Bound;
 
 /// Contract name that is used for migration.
-const CONTRACT_NAME: &str = "stable_ado";
+const CONTRACT_NAME: &str = "ito-token";
 /// Contract version that is used for migration.
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -681,8 +681,8 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
     let contract_version = get_contract_version(deps.storage)?;
 
     match contract_version.contract.as_ref() {
-        "xastro_token" => match contract_version.version.as_ref() {
-            "1.1.1" | "1.1.2" | "1.1.3" => {}
+        "ito-token" => match contract_version.version.as_ref() {
+            "1.0.0" | "1.0.1" | "1.0.2" => {}
             _ => {
                 return Err(StdError::generic_err(
                     "Cannot migrate. Unsupported contract version",

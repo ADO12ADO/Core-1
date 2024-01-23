@@ -1,7 +1,7 @@
 # Astroport Pair Bonded Template
 
-Pair bonded template is an implementation of pair with bonded assets(e.g. ASTRO-ADO, MARS-xMARS, and other tokens that are correlated but have an increasing exchange rate compared to the other token).
-Use [Pair ASTRO-ADO](/contracts/pair_astro_xastro/) as example of template implementation.
+Pair bonded template is an implementation of pair with bonded assets(e.g. ASTRO-ITO, MARS-xMARS, and other tokens that are correlated but have an increasing exchange rate compared to the other token).
+Use [Pair ASTRO-ITO](/contracts/pair_astro_xastro/) as example of template implementation.
 
 ## InstantiateMsg
 

@@ -37,7 +37,7 @@ astroport-circular-buffer = { path = "../../packages/circular_buffer", version =
 
 [dev-dependencies]
 anyhow = "1.0"
-proptest = "1.1.1"
+proptest = "1.0.0"
 sim = { git = "https://github.com/astroport-fi/astroport-sims", branch = "main", package = "sim" }
 astroport-token = { path = "../token" }
 astroport-factory = { path = "../factory" }

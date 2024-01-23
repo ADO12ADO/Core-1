@@ -45,7 +45,7 @@ async function provideLiquidity(network: any, astroport: Astroport, accAddress: 
     let xastro_balance = await astroport.getTokenBalance(network.xastroAddress, accAddress);
 
     console.log(`ASTRO balance: ${astro_balance}`)
-    console.log(`ADO balance: ${xastro_balance}`)
+    console.log(`ITO balance: ${xastro_balance}`)
 }
 
 async function withdrawLiquidity(network: any, astroport: Astroport, accAddress: string) {
@@ -61,7 +61,7 @@ async function withdrawLiquidity(network: any, astroport: Astroport, accAddress:
     let xastro_balance = await astroport.getTokenBalance(network.xastroAddress, accAddress);
 
     console.log(`ASTRO balance: ${astro_balance}`)
-    console.log(`ADO balance: ${xastro_balance}`)
+    console.log(`ITO balance: ${xastro_balance}`)
 }
 
 async function stake(network: any, astroport: Astroport, accAddress: string) {
@@ -78,7 +78,7 @@ async function stake(network: any, astroport: Astroport, accAddress: string) {
     let new_xastro_balance = await astroport.getTokenBalance(network.xastroAddress, accAddress);
 
     console.log(`ASTRO balance: ${new_astro_balance}`)
-    console.log(`ADO balance: ${new_xastro_balance}`)
+    console.log(`ITO balance: ${new_xastro_balance}`)
 
     strictEqual(true, new_astro_balance < astro_balance);
     strictEqual(true, new_xastro_balance > xastro_balance);
@@ -90,14 +90,14 @@ async function unstake(network: any, astroport: Astroport, accAddress: string) {
 
     const staking = astroport.staking(network.stakingAddress);
 
-    console.log(`Unstaking ${xastro_balance} ADO`)
+    console.log(`Unstaking ${xastro_balance} ITO`)
     await staking.unstakeAstro(network.xastroAddress, xastro_balance.toString())
 
     let final_astro_balance = await astroport.getTokenBalance(network.tokenAddress, accAddress);
     let final_xastro_balance = await astroport.getTokenBalance(network.xastroAddress, accAddress);
 
     console.log(`ASTRO balance: ${final_astro_balance}`)
-    console.log(`ADO balance: ${final_xastro_balance}`)
+    console.log(`ITO balance: ${final_xastro_balance}`)
 
     strictEqual(true, final_astro_balance >= astro_balance);
     strictEqual(final_xastro_balance, 0);
@@ -114,7 +114,7 @@ async function swap(network: any, astroport: Astroport, accAddress: string) {
     let xastro_balance = await astroport.getTokenBalance(network.xastroAddress, accAddress);
 
     console.log(`ASTRO balance: ${astro_balance}`)
-    console.log(`ADO balance: ${xastro_balance}`)
+    console.log(`ITO balance: ${xastro_balance}`)
 
     let fee_info = await factory.queryFeeInfo('xyk');
     strictEqual(true,  fee_info.fee_address != null, "fee address is not set")

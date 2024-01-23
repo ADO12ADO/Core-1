@@ -19,7 +19,7 @@ pub struct InstantiateMarketingInfo {
     pub logo: Option<Logo>,
 }
 
-/// This structure describes the parameters used for creating a ADO token contract.
+/// This structure describes the parameters used for creating a ITO token contract.
 #[cw_serde]
 pub struct InstantiateMsg {
     /// Token name
@@ -52,7 +52,7 @@ pub enum QueryMsg {
     /// TokenInfo returns the contract's metadata - name, decimals, supply, etc.
     #[returns(TokenInfoResponse)]
     TokenInfo {},
-    /// Returns who can mint ADO and the hard cap on maximum tokens after minting.
+    /// Returns who can mint ITO and the hard cap on maximum tokens after minting.
     #[returns(Option<MinterResponse>)]
     Minter {},
     /// Allowance returns an amount of tokens the spender can spend from the owner account, 0 if unset.
@@ -65,7 +65,7 @@ pub enum QueryMsg {
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    /// AllAccounts returns all the accounts that have ADO balances. Supports pagination.
+    /// AllAccounts returns all the accounts that have ITO balances. Supports pagination.
     #[returns(AllAccountsResponse)]
     AllAccounts {
         start_after: Option<String>,
