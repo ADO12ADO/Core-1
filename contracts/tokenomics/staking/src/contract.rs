@@ -45,9 +45,8 @@ pub fn instantiate(
     CONFIG.save(
         deps.storage,
         &Config {
-            astro_token_addr: deps.api.addr_validate(&msg.astro_token_addr)?,
+            astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
             xastro_token_addr: Addr::unchecked(""),
-            admin: env.contract.address.clone(), // Assuming contract creator is the admin
         },
     )?;
 
@@ -84,15 +83,6 @@ pub fn instantiate(
 /// ## Variants
 /// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
 /// it depending on the received template.
-// contract.rs
-
-// ... existing imports and other code
-
-// Include the #[derive] attribute and the ExecuteMsg enum here
-
-
-// ... existing code
-
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -102,39 +92,9 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
-        ExecuteMsg::UpdateAstroTokenAddr { astro_token_addr } => {
-            update_astro_token_addr(deps, env, info, astro_token_addr)
-        }
     }
 }
 
-// ... existing imports and other code
-
-// ... existing imports and other code
-
-pub fn update_astro_token_addr(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    astro_token_addr: String,
-) -> Result<Response, ContractError> {
-    let config: Config = CONFIG.load(deps.storage)?;
-
-    // Check if the sender is the admin
-    if info.sender != config.admin {
-        return Err(ContractError::Unauthorized {});
-    }
-
-    // Update the deposit_token_addr
-    CONFIG.update::<_, ContractError>(deps.storage, |mut existing_config| {
-        existing_config.astro_token_addr = deps.api.addr_validate(&astro_token_addr)?;
-        Ok(existing_config)
-    })?;
-
-    Ok(Response::new().add_attribute("action", "update_astro_token_addr"))
-}
-
-// ... rest of your code
 /// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
@@ -326,7 +286,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
 
     match contract_version.contract.as_ref() {
         "ito-staking" => match contract_version.version.as_ref() {
-            "1.1.0" | "1.1.1" | "1.1.2" => {}
+            "1.1.0" | "1.0.1" | "1.0.2" => {}
             _ => return Err(ContractError::MigrationError {}),
         },
         _ => return Err(ContractError::MigrationError {}),
