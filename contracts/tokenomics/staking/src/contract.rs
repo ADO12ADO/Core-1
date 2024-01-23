@@ -33,7 +33,6 @@ pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
 
 /// Creates a new contract with the specified parameters in the [`InstantiateMsg`].
 #[cfg_attr(not(feature = "library"), entry_point)]
-#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -113,7 +112,6 @@ pub fn execute(
 
 // ... existing imports and other code
 
-#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn update_astro_token_addr(
     deps: DepsMut,
     _env: Env,
