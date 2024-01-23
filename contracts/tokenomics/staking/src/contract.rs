@@ -33,6 +33,7 @@ pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
 
 /// Creates a new contract with the specified parameters in the [`InstantiateMsg`].
 #[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
     env: Env,
@@ -47,7 +48,7 @@ pub fn instantiate(
         &Config {
             astro_token_addr: deps.api.addr_validate(&msg.astro_token_addr)?,
             xastro_token_addr: Addr::unchecked(""),
-            admin: env.contract.address.clone(),  // Assuming contract creator is the admin
+            admin: env.contract.address.clone(), // Assuming contract creator is the admin
         },
     )?;
 
@@ -108,7 +109,7 @@ pub fn execute(
     }
 }
 
-fn update_astro_token_addr(
+pub fn update_astro_token_addr(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
@@ -122,7 +123,7 @@ fn update_astro_token_addr(
     }
 
     // Update the deposit_token_addr
-    CONFIG.update(deps.storage, |mut existing_config| {
+    CONFIG.update::<ContractError>(deps.storage, |mut existing_config| {
         existing_config.astro_token_addr = deps.api.addr_validate(&astro_token_addr)?;
         Ok(existing_config)
     })?;
