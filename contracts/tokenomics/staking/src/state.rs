@@ -11,8 +11,6 @@ pub struct Config {
     pub xastro_token_addr: Addr,
     /// The admin address who can perform certain privileged actions
     pub admin: Addr,
-
-    pub deposit_token_addr: Addr,
 }
 
 /// Stores the contract config at the given key
