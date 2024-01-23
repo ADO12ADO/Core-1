@@ -109,6 +109,9 @@ pub fn execute(
     }
 }
 
+// ... existing imports and other code
+
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn update_astro_token_addr(
     deps: DepsMut,
     _env: Env,
@@ -123,7 +126,7 @@ pub fn update_astro_token_addr(
     }
 
     // Update the deposit_token_addr
-    CONFIG.update::<ContractError>(deps.storage, |mut existing_config| {
+    CONFIG.update(deps.storage, |mut existing_config: Config| {
         existing_config.astro_token_addr = deps.api.addr_validate(&astro_token_addr)?;
         Ok(existing_config)
     })?;
@@ -131,6 +134,7 @@ pub fn update_astro_token_addr(
     Ok(Response::new().add_attribute("action", "update_astro_token_addr"))
 }
 
+// ... rest of your code
 /// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
