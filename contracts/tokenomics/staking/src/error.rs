@@ -14,7 +14,7 @@ pub enum ContractError {
     #[error("An error occurred during migration")]
     MigrationError {},
 
-    #[error("Initial stake amount must be more than {}", MINIMUM_STAKE_AMOUNT)]
+    #[error("Initial stake amount must be more than {0}")]
     MinimumStakeAmountError {},
 
     #[error("Insufficient amount of Stake")]
@@ -22,19 +22,19 @@ pub enum ContractError {
 
     #[error("Failed to parse or process reply message")]
     FailedToParseReply {},
-    
+
     #[error("Total supply max 21 million")]
     ExceedsOverallDepositLimit {},
 }
 
 impl From<OverflowError> for ContractError {
     fn from(o: OverflowError) -> Self {
-        StdError::from(o).into()
+        ContractError::Std(o.into())
     }
 }
 
 impl From<DivideByZeroError> for ContractError {
     fn from(err: DivideByZeroError) -> Self {
-        StdError::from(err).into()
+        ContractError::Std(err.into())
     }
 }
