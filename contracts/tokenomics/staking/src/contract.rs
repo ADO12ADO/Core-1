@@ -92,7 +92,32 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
+        ExecuteMsg::UpdateDepositTokenAddr { deposit_token_addr } => {
+            update_deposit_token_addr(deps, env, info, deposit_token_addr)
+        }
     }
+}
+
+fn update_deposit_token_addr(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    deposit_token_addr: String,
+) -> Result<Response, ContractError> {
+    let config: Config = CONFIG.load(deps.storage)?;
+
+    // Check if the sender is the admin
+    if info.sender != config.admin {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    // Update the deposit_token_addr
+    CONFIG.update(deps.storage, |mut existing_config| {
+        existing_config.deposit_token_addr = deps.api.addr_validate(&deposit_token_addr)?;
+        Ok(existing_config)
+    })?;
+
+    Ok(Response::new().add_attribute("action", "update_deposit_token_addr"))
 }
 
 /// The entry point to the contract for processing replies from submessages.
