@@ -111,6 +111,8 @@ pub fn execute(
 
 // ... existing imports and other code
 
+// ... existing imports and other code
+
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn update_astro_token_addr(
     deps: DepsMut,
@@ -126,7 +128,7 @@ pub fn update_astro_token_addr(
     }
 
     // Update the deposit_token_addr
-    CONFIG.update(deps.storage, |mut existing_config: Config| {
+    CONFIG.update::<_, ContractError>(deps.storage, |mut existing_config| {
         existing_config.astro_token_addr = deps.api.addr_validate(&astro_token_addr)?;
         Ok(existing_config)
     })?;
