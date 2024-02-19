@@ -4,7 +4,6 @@ use cosmwasm_std::{
     SubMsgResponse, SubMsgResult, Uint128, WasmMsg,
 };
 use cw_utils::parse_instantiate_response_data;
-
 use crate::error::ContractError;
 use crate::state::{Config, CONFIG};
 use astroport::staking::{
@@ -12,7 +11,6 @@ use astroport::staking::{
 };
 use cw2::{get_contract_version, set_contract_version};
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
-
 use astroport::querier::{query_supply, query_token_balance};
 use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
@@ -30,8 +28,6 @@ const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
 
 /// Minimum initial xastro share
 pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
-
-/// Creates a new contract with the specified parameters in the [`InstantiateMsg`].
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -47,6 +43,7 @@ pub fn instantiate(
         &Config {
             astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
             xastro_token_addr: Addr::unchecked(""),
+            owner: msg.owner,
         },
     )?;
 
@@ -77,18 +74,6 @@ pub fn instantiate(
 
     Ok(Response::new().add_submessages(sub_msg))
 }
-
-/// Exposes execute functions available in the contract.
-///
-/// ## Variants
-/// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
-/// it depending on the received template.
-/// Exposes execute functions available in the contract.
-///
-/// ## Variants
-/// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
-/// it depending on the received template.
-/// * **ExecuteMsg::UpdateAstroTokenAddr { new_addr }** Updates the `astro_token_addr`.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -98,10 +83,11 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
-        ExecuteMsg::UpdateAstroTokenAddr { new_addr } => update_astro_token_addr(deps, info, new_addr),
+        ExecuteMsg::UpdateAstroTokenAddr { new_addr } => {
+            update_astro_token_addr(deps, info, new_addr)
+        }
     }
-}
-
+                                    }
 /// Function to update astro_token_addr
 fn update_astro_token_addr(
     deps: DepsMut,
@@ -126,17 +112,12 @@ fn update_astro_token_addr(
         attr("new_astro_token_addr", new_addr),
     ]))
 }
-
-/// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match msg {
         Reply {
             id: INSTANTIATE_TOKEN_REPLY_ID,
-            result:
-                SubMsgResult::Ok(SubMsgResponse {
-                    data: Some(data), ..
-                }),
+            result: SubMsgResult::Ok(SubMsgResponse { data: Some(data), .. }),
         } => {
             let mut config = CONFIG.load(deps.storage)?;
 
@@ -156,7 +137,6 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         _ => Err(ContractError::FailedToParseReply {}),
     }
 }
-
 /// Receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
 ///
 /// * **cw20_msg** CW20 message to process.
@@ -226,7 +206,7 @@ fn receive_cw20(
                 amount
             };
 
-                        messages.push(wasm_execute(
+            messages.push(wasm_execute(
                 config.xastro_token_addr.clone(),
                 &Cw20ExecuteMsg::Mint {
                     recipient: recipient.clone(),
@@ -276,15 +256,6 @@ fn receive_cw20(
         }
     }
 }
-
-/// Exposes all the queries available in the contract.
-///
-/// ## Queries
-/// * **QueryMsg::Config {}** Returns the staking contract configuration using a [`ConfigResponse`] object.
-///
-/// * **QueryMsg::TotalShares {}** Returns the total ITO supply using a [`Uint128`] object.
-///
-/// * **QueryMsg::Config {}** Returns the amount of ASTRO that's currently in the staking pool using a [`Uint128`] object.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     let config = CONFIG.load(deps.storage)?;
@@ -303,15 +274,6 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
         )?),
     }
 }
-
-/// ## Description
-/// Used for migration of contract. Returns the default object of type [`Response`].
-/// ## Params
-/// * **_deps** is the object of type [`DepsMut`].
-///
-/// * **_env** is the object of type [`Env`].
-///
-/// * **_msg** is the object of type [`MigrateMsg`].
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
@@ -331,4 +293,4 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, C
         .add_attribute("previous_contract_version", &contract_version.version)
         .add_attribute("new_contract_name", CONTRACT_NAME)
         .add_attribute("new_contract_version", CONTRACT_VERSION))
-                }
+}
