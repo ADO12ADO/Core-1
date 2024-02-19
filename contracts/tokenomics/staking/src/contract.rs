@@ -83,6 +83,12 @@ pub fn instantiate(
 /// ## Variants
 /// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
 /// it depending on the received template.
+/// Exposes execute functions available in the contract.
+///
+/// ## Variants
+/// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
+/// it depending on the received template.
+/// * **ExecuteMsg::UpdateAstroTokenAddr { new_addr }** Updates the `astro_token_addr`.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -92,7 +98,33 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
+        ExecuteMsg::UpdateAstroTokenAddr { new_addr } => update_astro_token_addr(deps, info, new_addr),
     }
+}
+
+/// Function to update astro_token_addr
+fn update_astro_token_addr(
+    deps: DepsMut,
+    info: MessageInfo,
+    new_addr: String,
+) -> Result<Response, ContractError> {
+    // Check if the caller has the necessary permissions (e.g., only the owner can update)
+    let config: Config = CONFIG.load(deps.storage)?;
+    if info.sender != config.owner {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    // Validate and update the astro_token_addr
+    let new_addr = deps.api.addr_validate(&new_addr)?;
+    CONFIG.update(deps.storage, |mut config| {
+        config.astro_token_addr = new_addr.clone();
+        Ok(config)
+    })?;
+
+    Ok(Response::new().add_attributes(vec![
+        attr("action", "update_astro_token_addr"),
+        attr("new_astro_token_addr", new_addr),
+    ]))
 }
 
 /// The entry point to the contract for processing replies from submessages.
