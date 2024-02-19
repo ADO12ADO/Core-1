@@ -86,6 +86,7 @@ pub fn instantiate(
 /// it depending on the received template.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
+pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -93,15 +94,13 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
-        // Fixed the enum variant name to match your definition
-        ExecuteMsg::UpdateAstroTokenAddr { new_addr } => execute_msg(
-            deps,
-            env,
-            info,
-            ExecuteMsg::UpdateAstroTokenAddr { new_addr: new_addr.clone() },
-        ),
+        ExecuteMsg::UpdateAstroTokenAddr { new_addr } => {
+            // Memanggil fungsi execute_msg dengan msg langsung, karena strukturnya sudah sesuai
+            execute_msg(deps, env, info, ExecuteMsg::UpdateAstroTokenAddr { new_addr })
+        }
     }
 }
+
 
 /// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
