@@ -12,6 +12,8 @@ pub struct InstantiateMsg {
     pub token_code_id: u64,
     /// The ASTRO token contract address
     pub deposit_token_addr: String,
+    /// The ADO token contract address
+    pub astro_token_addr: String, // <-- Tambahkan ini
     /// the marketing info of type [`InstantiateMarketingInfo`]
     pub marketing: Option<InstantiateMarketingInfo>,
 }
@@ -21,6 +23,7 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     /// Receive receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
     Receive(Cw20ReceiveMsg),
+    UpdateAstroTokenAddr { astro_token_addr: String }, // <-- Added this variant
 }
 
 /// This structure describes the query messages available in the contract.
@@ -40,7 +43,7 @@ pub enum QueryMsg {
 pub struct ConfigResponse {
     /// The ASTRO token address
     pub deposit_token_addr: Addr,
-    /// The ITO token address
+    /// The ADO token address
     pub share_token_addr: Addr,
 }
 
@@ -51,8 +54,8 @@ pub struct MigrateMsg {}
 /// This structure describes a CW20 hook message.
 #[cw_serde]
 pub enum Cw20HookMsg {
-    /// Deposits ASTRO in exchange for ITO
+    /// Deposits ASTRO in exchange for ADO
     Enter {},
-    /// Burns ITO in exchange for ASTRO
+    /// Burns ADO in exchange for ASTRO
     Leave {},
 }
