@@ -85,6 +85,7 @@ pub fn instantiate(
 /// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
 /// it depending on the received template.
 #[cfg_attr(not(feature = "library"), entry_point)]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -93,6 +94,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
+        // Fixed the enum variant name to match your definition
         ExecuteMsg::UpdateAstroTokenAddr { new_addr } => execute_msg(
             deps,
             env,
@@ -158,10 +160,9 @@ pub fn execute_msg(
                 attr("new_astro_token_addr", new_addr.to_string()),
             ]))
         }
+        // ... your existing code ...
     }
 }
-
-// ... your existing code
 
  
 
