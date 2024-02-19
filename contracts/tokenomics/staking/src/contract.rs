@@ -1,9 +1,10 @@
 use cosmwasm_std::{
     attr, entry_point, from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps,
-    DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdError, StdResult, SubMsg,
-    SubMsgResponse, SubMsgResult, Uint128, WasmMsg,
+    DepsMut, Env, MessageInfo, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, Uint128,
+    WasmMsg,
 };
 use cw_utils::parse_instantiate_response_data;
+
 use crate::error::ContractError;
 use crate::state::{Config, CONFIG};
 use astroport::staking::{
@@ -11,9 +12,8 @@ use astroport::staking::{
 };
 use cw2::{get_contract_version, set_contract_version};
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg, MinterResponse};
-use astroport::querier::{query_supply, query_token_balance};
-use astroport::xastro_token::InstantiateMsg as TokenInstantiateMsg;
 
+// ...
 /// Contract name that is used for migration.
 const CONTRACT_NAME: &str = "ito-staking";
 /// Contract version that is used for migration.
@@ -28,6 +28,9 @@ const INSTANTIATE_TOKEN_REPLY_ID: u64 = 1;
 
 /// Minimum initial xastro share
 pub(crate) const MINIMUM_STAKE_AMOUNT: Uint128 = Uint128::new(1_000);
+
+// ...
+/// Creates a new contract with the specified parameters in the [`InstantiateMsg`].
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
     deps: DepsMut,
@@ -43,7 +46,7 @@ pub fn instantiate(
         &Config {
             astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
             xastro_token_addr: Addr::unchecked(""),
-            owner: msg.owner,
+            owner: env.message.sender,
         },
     )?;
 
@@ -74,6 +77,14 @@ pub fn instantiate(
 
     Ok(Response::new().add_submessages(sub_msg))
 }
+
+// ...
+/// Exposes execute functions available in the contract.
+///
+/// ## Variants
+/// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
+/// it depending on the received template.
+/// * **ExecuteMsg::UpdateAstroTokenAddr { new_addr }** Updates the `astro_token_addr`.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
@@ -87,12 +98,13 @@ pub fn execute(
             update_astro_token_addr(deps, info, new_addr)
         }
     }
-                                    }
+}
+
 /// Function to update astro_token_addr
 fn update_astro_token_addr(
     deps: DepsMut,
     info: MessageInfo,
-    new_addr: String,
+    new_addr: &str,
 ) -> Result<Response, ContractError> {
     // Check if the caller has the necessary permissions (e.g., only the owner can update)
     let config: Config = CONFIG.load(deps.storage)?;
@@ -101,23 +113,40 @@ fn update_astro_token_addr(
     }
 
     // Validate and update the astro_token_addr
-    let new_addr = deps.api.addr_validate(&new_addr)?;
+    let new_addr = deps.api.addr_validate(new_addr)?;
     CONFIG.update(deps.storage, |mut config| {
         config.astro_token_addr = new_addr.clone();
         Ok(config)
     })?;
 
-    Ok(Response::new().add_attributes(vec![
-        attr("action", "update_astro_token_addr"),
-        attr("new_astro_token_addr", new_addr),
+    Ok(Response::new().add_messages(vec![
+        SubMsg {
+            msg: WasmMsg::Execute {
+                contract_addr: config.astro_token_addr.to_string(),
+                msg: to_binary(&cw20::Cw20ExecuteMsg::UpdateConfig {
+                    astro_token_addr: Some(new_addr.into()),
+                })?,
+                funds: vec![],
+            }
+            .into(),
+            gas_limit: None,
+            id: 1,
+            reply_on: ReplyOn::Success,
+        },
     ]))
 }
+
+// ...
+/// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractError> {
     match msg {
         Reply {
             id: INSTANTIATE_TOKEN_REPLY_ID,
-            result: SubMsgResult::Ok(SubMsgResponse { data: Some(data), .. }),
+            result:
+                SubMsgResult::Ok(SubMsgResponse {
+                    data: Some(data), ..
+                }),
         } => {
             let mut config = CONFIG.load(deps.storage)?;
 
@@ -137,6 +166,9 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         _ => Err(ContractError::FailedToParseReply {}),
     }
 }
+
+// ...
+
 /// Receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
 ///
 /// * **cw20_msg** CW20 message to process.
