@@ -85,7 +85,6 @@ pub fn instantiate(
 /// * **ExecuteMsg::Receive(msg)** Receives a message of type [`Cw20ReceiveMsg`] and processes
 /// it depending on the received template.
 #[cfg_attr(not(feature = "library"), entry_point)]
-#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
     env: Env,
@@ -135,6 +134,7 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
 }
 
 /// Handles the custom execute message.
+/// Handles the custom execute message.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute_msg(
     deps: DepsMut,
@@ -163,6 +163,8 @@ pub fn execute_msg(
         // ... your existing code ...
     }
 }
+
+// ... bagian kode setelahnya ...
 
  
 
