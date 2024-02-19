@@ -9,6 +9,8 @@ pub struct Config {
     pub astro_token_addr: Addr,
     /// The ITO token contract address
     pub xastro_token_addr: Addr,
+    /// The owner of the contract
+    pub owner: Addr,
 }
 
 
