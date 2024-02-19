@@ -47,7 +47,6 @@ pub fn instantiate(
         &Config {
             astro_token_addr: deps.api.addr_validate(&msg.deposit_token_addr)?,
             xastro_token_addr: Addr::unchecked(""),
-            owner: msg.owner.clone(),
         },
     )?;
 
@@ -93,13 +92,8 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw20(deps, env, info, msg),
-        ExecuteMsg::UpdateAstroTokenAddr { new_addr } => {
-            // Memanggil fungsi execute_msg dengan msg langsung, karena strukturnya sudah sesuai
-            execute_msg(deps, env, info, ExecuteMsg::UpdateAstroTokenAddr { new_addr })
-        }
     }
 }
-
 
 /// The entry point to the contract for processing replies from submessages.
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -130,41 +124,6 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ContractE
         _ => Err(ContractError::FailedToParseReply {}),
     }
 }
-
-/// Handles the custom execute message.
-/// Handles the custom execute message.
-#[cfg_attr(not(feature = "library"), entry_point)]
-pub fn execute_msg(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> Result<Response, ContractError> {
-    match msg {
-        ExecuteMsg::UpdateAstroTokenAddr { new_addr } => {
-            // Ensure only the contract owner can update the address
-            if info.sender != CONFIG.load(deps.storage)?.owner {
-                return Err(ContractError::Unauthorized {});
-            }
-
-            // Update the astro_token_addr in the contract configuration
-            CONFIG.update(deps.storage, |mut config| {
-                config.astro_token_addr = new_addr.clone();
-                Ok(config)
-            })?;
-
-            Ok(Response::new().add_attributes(vec![
-                attr("action", "update_astro_token_addr"),
-                attr("new_astro_token_addr", new_addr.to_string()),
-            ]))
-        }
-        // ... your existing code ...
-    }
-}
-
-// ... bagian kode setelahnya ...
-
- 
 
 /// Receives a message of type [`Cw20ReceiveMsg`] and processes it depending on the received template.
 ///
