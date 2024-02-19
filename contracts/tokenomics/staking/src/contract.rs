@@ -86,7 +86,6 @@ pub fn instantiate(
 /// it depending on the received template.
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
-pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
